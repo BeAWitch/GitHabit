@@ -1,3 +1,9 @@
+export interface Category {
+  id: number;
+  name: string;
+  color: string;
+}
+
 export interface Habit {
   id: number;
   name: string;
@@ -6,6 +12,8 @@ export interface Habit {
   unitType: 'count' | 'binary';
   unitLabel: string; // e.g. times, minutes, done
   color: string; // The category dot color
+  categoryId: number;
+  categoryName: string;
   createdAt: number; // Unix timestamp
   status: 'active' | 'archived';
 }

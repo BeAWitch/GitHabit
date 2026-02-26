@@ -1,9 +1,10 @@
 import { create } from 'zustand';
 import * as RepoAPI from '@/db/repositories';
-import type { Habit, CheckIn } from '@/types/models';
+import type { Habit, CheckIn, Category } from '@/types/models';
 
 interface HabitState {
   habits: Habit[];
+  categories: Category[];
   checkIns: CheckIn[];
   globalContributions: Record<string, number>; // Dictionary indexed by date string (YYYY-MM-DD)
   habitContributions: Record<number, Record<string, number>>;
@@ -12,13 +13,14 @@ interface HabitState {
   // Actions
   fetchData: () => void; // Syncs all local SQLite data into state
   fetchHabitDetail: (habitId: number) => void;
-  addHabit: (name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, color?: string) => void;
+  addHabit: (name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number) => void;
   removeHabit: (id: number) => void;
   commitCheckIn: (habitId: number, message: string, value: number) => void;
 }
 
 export const useHabitStore = create<HabitState>((set, get) => ({
   habits: [],
+  categories: [],
   checkIns: [],
   globalContributions: {},
   habitContributions: {},
@@ -26,6 +28,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
 
   fetchData: () => {
     try {
+      const categories = RepoAPI.getCategories();
       const habits = RepoAPI.getHabits();
       const checkIns = RepoAPI.getAllCheckIns();
       const contributionsData = RepoAPI.getGlobalContributions();
@@ -48,7 +51,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         };
       });
 
-      set({ habits, checkIns, globalContributions: contributionMap, habitStats });
+      set({ habits, categories, checkIns, globalContributions: contributionMap, habitStats });
     } catch (error) {
       console.error('Failed to fetch data from DB:', error);
     }
@@ -79,8 +82,8 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     }
   },
 
-  addHabit: (name, description, plan, unitType, unitLabel, color) => {
-    RepoAPI.createHabit(name, description, plan, unitType, unitLabel, color);
+  addHabit: (name, description, plan, unitType, unitLabel, categoryId) => {
+    RepoAPI.createHabit(name, description, plan, unitType, unitLabel, categoryId);
     get().fetchData(); // Refresh state after mutation
   },
 

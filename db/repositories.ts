@@ -1,11 +1,27 @@
 import { db } from './database';
-import type { Habit, CheckIn, ContributionData } from '@/types/models';
+import type { Habit, CheckIn, ContributionData, Category } from '@/types/models';
+
+/**
+ * Category Operations
+ */
+export const getCategories = (): Category[] => {
+  return db.getAllSync<Category>('SELECT * FROM categories ORDER BY id ASC;');
+};
 
 /**
  * Habit (Repository) Operations
  */
 export const getHabits = (): Habit[] => {
-  return db.getAllSync<Habit>('SELECT * FROM habits WHERE status = "active" ORDER BY createdAt DESC;');
+  return db.getAllSync<Habit>(`
+    SELECT h.*, c.color as categoryColor, c.name as categoryName 
+    FROM habits h
+    LEFT JOIN categories c ON h.categoryId = c.id
+    WHERE h.status = 'active' 
+    ORDER BY h.createdAt DESC;
+  `).map(row => ({
+    ...row,
+    color: (row as any).categoryColor || row.color, // Fallback to legacy color if category missing
+  }));
 };
 
 export const getHabitById = (id: number): Habit | null => {
@@ -35,11 +51,12 @@ export const createHabit = (
   plan: string,
   unitType: 'count' | 'binary',
   unitLabel: string,
-  color: string = '#238636'
+  categoryId: number,
+  color: string = '#238636' // Fallback
 ): number => {
   const result = db.runSync(
-    'INSERT INTO habits (name, description, plan, unitType, unitLabel, color, createdAt, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
-    [name, description, plan, unitType, unitLabel, color, Date.now(), 'active']
+    'INSERT INTO habits (name, description, plan, unitType, unitLabel, categoryId, color, createdAt, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
+    [name, description, plan, unitType, unitLabel, categoryId, color, Date.now(), 'active']
   );
   return result.lastInsertRowId;
 };

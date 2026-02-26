@@ -90,7 +90,7 @@ export default function HabitDetail() {
         >
           <Octicons name="chevron-left" size={18} color={color.text} />
           <Text className="text-xl font-semibold text-github-lightText dark:text-github-darkText ml-1">
-            {habit.name}
+            Detail
           </Text>
         </TouchableOpacity>
         <View className="w-6" />
@@ -99,7 +99,7 @@ export default function HabitDetail() {
       {/* Header */}
       <View className="mb-4">
         <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-          Repository
+          Habit
         </Text>
         <View className="flex-row items-center justify-between mt-1">
           <Text className="text-2xl font-bold text-github-lightText dark:text-github-darkText flex-1 mr-2">
@@ -114,9 +114,24 @@ export default function HabitDetail() {
             <Text className="text-white font-semibold ml-2">Commit</Text>
           </TouchableOpacity>
         </View>
-        <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mt-2">
-          {habit.description || "No description provided."}
-        </Text>
+        <View className="flex-row items-center mt-2">
+          {habit.categoryName && (
+            <View
+              className="px-2 py-0.5 rounded-full border border-github-lightBorder dark:border-github-darkBorder mr-2 flex-row items-center"
+            >
+              <View
+                className="w-2 h-2 rounded-full mr-1.5"
+                style={{ backgroundColor: habit.color || color.primary }}
+              />
+              <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+                {habit.categoryName}
+              </Text>
+            </View>
+          )}
+          <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted flex-1">
+            {habit.description || "No description provided."}
+          </Text>
+        </View>
       </View>
 
       {/* README-like plan */}

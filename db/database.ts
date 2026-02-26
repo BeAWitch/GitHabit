@@ -47,6 +47,37 @@ export const initDB = () => {
       }
     }
 
+    // Create Categories table
+    db.execSync(`
+      CREATE TABLE IF NOT EXISTS categories (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        color TEXT NOT NULL
+      );
+    `);
+
+    // Insert default categories if empty
+    const catCount = db.getFirstSync<{count: number}>('SELECT COUNT(*) as count FROM categories');
+    if (catCount?.count === 0) {
+      db.execSync(`
+        INSERT INTO categories (name, color) VALUES 
+        ('Programming', '#238636'),
+        ('Health', '#8250df'),
+        ('Learning', '#0969da'),
+        ('Finance', '#bf8700'),
+        ('Hobbies', '#da3633');
+      `);
+    }
+
+    try {
+      db.execSync('ALTER TABLE habits ADD COLUMN categoryId INTEGER;');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('duplicate column name')) {
+        console.error('Failed to migrate habits.categoryId:', error);
+      }
+    }
+
     // Create CheckIns (Commits) table
     db.execSync(`
       CREATE TABLE IF NOT EXISTS check_ins (
