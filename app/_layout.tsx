@@ -2,13 +2,15 @@ import { Stack } from "expo-router";
 import { useEffect } from "react";
 import { useColorScheme } from "nativewind";
 import { useThemeStore } from "@/store/themeStore";
+import { useThemeColors } from "@/hooks/useThemeColors";
 import { initDB } from "@/db/database";
 
 import "../css/global.css";
 
 export default function RootLayout() {
   const { theme } = useThemeStore();
-  const { colorScheme, setColorScheme } = useColorScheme();
+  const { setColorScheme } = useColorScheme();
+  const { color } = useThemeColors();
 
   useEffect(() => {
     // Initialize the SQLite database on startup
@@ -20,21 +22,19 @@ export default function RootLayout() {
   }, [theme]);
 
   // Determine actual theme
-  const isDark = colorScheme === "dark";
-
   return (
     <Stack
       screenOptions={{
         headerShown: false,
         headerStyle: {
-          backgroundColor: isDark ? "#0d1117" : "#ffffff",
+          backgroundColor: color.bg,
         },
-        headerTintColor: isDark ? "#c9d1d9" : "#24292f",
+        headerTintColor: color.text,
         headerTitleStyle: {
           fontWeight: "bold",
         },
         contentStyle: {
-          backgroundColor: isDark ? "#0d1117" : "#ffffff",
+          backgroundColor: color.bg,
         },
       }}
     />

@@ -12,10 +12,17 @@ export const getHabitById = (id: number): Habit | null => {
   return db.getFirstSync<Habit>('SELECT * FROM habits WHERE id = ?;', [id]);
 };
 
-export const createHabit = (name: string, description: string, color: string = '#238636'): number => {
+export const createHabit = (
+  name: string,
+  description: string,
+  plan: string,
+  unitType: 'count' | 'binary',
+  unitLabel: string,
+  color: string = '#238636'
+): number => {
   const result = db.runSync(
-    'INSERT INTO habits (name, description, color, createdAt, status) VALUES (?, ?, ?, ?, ?);',
-    [name, description, color, Date.now(), 'active']
+    'INSERT INTO habits (name, description, plan, unitType, unitLabel, color, createdAt, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?);',
+    [name, description, plan, unitType, unitLabel, color, Date.now(), 'active']
   );
   return result.lastInsertRowId;
 };
@@ -27,14 +34,14 @@ export const deleteHabit = (id: number) => {
 /**
  * Check-In (Commit) Operations
  */
-export const createCheckIn = (habitId: number, message: string = ''): number => {
+export const createCheckIn = (habitId: number, message: string = '', value: number = 1): number => {
   const now = new Date();
   const timestamp = now.getTime();
   const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
   const result = db.runSync(
-    'INSERT INTO check_ins (habitId, message, timestamp, dateString) VALUES (?, ?, ?, ?, ?);',
-    [habitId, message, timestamp, dateString]
+    'INSERT INTO check_ins (habitId, message, value, timestamp, dateString) VALUES (?, ?, ?, ?, ?);',
+    [habitId, message, value, timestamp, dateString]
   );
   return result.lastInsertRowId;
 };
@@ -53,7 +60,7 @@ export const getAllCheckIns = (): CheckIn[] => {
 export const getGlobalContributions = (): ContributionData[] => {
   // Groups all check-ins across all habits by date to generate the global heatmap
   return db.getAllSync<ContributionData>(`
-    SELECT dateString, COUNT(*) as count 
+    SELECT dateString, SUM(value) as count 
     FROM check_ins 
     GROUP BY dateString;
   `);
@@ -61,7 +68,7 @@ export const getGlobalContributions = (): ContributionData[] => {
 
 export const getHabitContributions = (habitId: number): ContributionData[] => {
   return db.getAllSync<ContributionData>(`
-    SELECT dateString, COUNT(*) as count 
+    SELECT dateString, SUM(value) as count 
     FROM check_ins 
     WHERE habitId = ?
     GROUP BY dateString;

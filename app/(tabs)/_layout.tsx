@@ -1,19 +1,15 @@
-import { Tabs } from 'expo-router';
-import { Octicons } from '@expo/vector-icons';
-import { useThemeStore } from '@/store/themeStore';
-import { useColorScheme } from 'react-native';
+import { useThemeColors } from "@/hooks/useThemeColors";
+import { Octicons } from "@expo/vector-icons";
+import { Tabs } from "expo-router";
 
 export default function TabLayout() {
-  const { theme } = useThemeStore();
-  const systemColorScheme = useColorScheme();
-  
-  const isDark = theme === "dark" || (theme === "auto" && systemColorScheme === "dark");
-  
+  const { color } = useThemeColors();
+
   // Define GitHub palette colors for the tab bar
-  const activeColor = isDark ? "#ffffff" : "#24292f"; // White in dark mode, dark grey in light mode
-  const inactiveColor = isDark ? "#8b949e" : "#57606a"; // Muted colors
-  const bgColor = isDark ? "#161b22" : "#f6f8fa"; // Canvas color for tab bar
-  const borderColor = isDark ? "#30363d" : "#d0d7de";
+  const activeColor = color.active; // White in dark mode, dark grey in light mode
+  const inactiveColor = color.muted; // Muted colors
+  const bgColor = color.canvas; // Canvas color for tab bar
+  const borderColor = color.border;
 
   return (
     <Tabs
@@ -26,18 +22,19 @@ export default function TabLayout() {
           borderTopColor: borderColor,
         },
         headerStyle: {
-          backgroundColor: isDark ? "#0d1117" : "#ffffff",
-          shadowColor: 'transparent', // Remove shadow on iOS
+          backgroundColor: color.bg,
+          shadowColor: "transparent", // Remove shadow on iOS
           elevation: 0, // Remove shadow on Android
           borderBottomWidth: 1,
           borderBottomColor: borderColor,
         },
         headerTintColor: activeColor,
-      }}>
+      }}
+    >
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: "Home",
           tabBarIcon: ({ color, size }) => (
             <Octicons name="home" size={size} color={color} />
           ),
@@ -46,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="repos"
         options={{
-          title: 'Repositories', // Following GitHub metaphor for "Habits"
+          title: "Repositories", // Following GitHub metaphor for "Habits"
           tabBarIcon: ({ color, size }) => (
             <Octicons name="repo" size={size} color={color} />
           ),
@@ -55,7 +52,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: "Profile",
           tabBarIcon: ({ color, size }) => (
             <Octicons name="person" size={size} color={color} />
           ),
