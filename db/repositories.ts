@@ -12,6 +12,23 @@ export const getHabitById = (id: number): Habit | null => {
   return db.getFirstSync<Habit>('SELECT * FROM habits WHERE id = ?;', [id]);
 };
 
+export const getHabitStats = (habitId: number): { total: number; lastTimestamp: number | null } => {
+  const result = db.getFirstSync<{ total: number; lastTimestamp: number | null }>(
+    `
+      SELECT COALESCE(SUM(value), 0) as total,
+      MAX(timestamp) as lastTimestamp
+      FROM check_ins
+      WHERE habitId = ?;
+    `,
+    [habitId]
+  );
+
+  return {
+    total: result?.total ?? 0,
+    lastTimestamp: result?.lastTimestamp ?? null,
+  };
+};
+
 export const createHabit = (
   name: string,
   description: string,

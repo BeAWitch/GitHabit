@@ -5,7 +5,7 @@ export const db = SQLite.openDatabaseSync('githabit.db');
 
 export const initDB = () => {
   try {
-    // Create Habits (Repositories) table
+    // Create Habits table
     db.execSync(`
       CREATE TABLE IF NOT EXISTS habits (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
