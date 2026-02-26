@@ -17,7 +17,7 @@ export default function Repositories() {
       {/* Header & Controls */}
       <View className="flex-row items-center justify-between mb-4">
         {/* Search Input */}
-        <View className="flex-1 bg-github-lightCanvas dark:bg-github-darkCanvas flex-row items-center border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 mr-3">
+        <View className="flex-1 bg-github-lightCanvas dark:bg-github-darkCanvas flex-row items-center border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-0 mr-3">
           <TextInput
             className="flex-1 text-github-lightText dark:text-github-darkText ml-2"
             placeholder="Find a habit..."

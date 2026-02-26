@@ -1,18 +1,33 @@
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { Octicons } from "@expo/vector-icons";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
+  const router = useRouter();
   const { color } = useThemeColors();
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
+      {/* Top Bar */}
+      <View className="flex-row items-center justify-between border-b border-github-lightBorder dark:border-github-darkBorder h-20 mb-4">
+        <TouchableOpacity
+          className="flex-row items-center mt-4"
+          onPress={() => router.back()}
+        >
+          <Octicons name="chevron-left" size={18} color={color.text} />
+          <Text className="text-xl font-semibold text-github-lightText dark:text-github-darkText ml-1">
+            Detail
+          </Text>
+        </TouchableOpacity>
+        <View className="w-6" />
+      </View>
+
       {/* Header */}
       <View className="mb-4">
         <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-          Repository
+          Habit
         </Text>
         <View className="flex-row items-center justify-between mt-1">
           <Text className="text-2xl font-bold text-github-lightText dark:text-github-darkText">

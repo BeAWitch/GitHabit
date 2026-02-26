@@ -41,9 +41,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="repos"
+        name="habits"
         options={{
-          title: "Repositories", // Following GitHub metaphor for "Habits"
+          title: "Habits",
           tabBarIcon: ({ color, size }) => (
             <Octicons name="repo" size={size} color={color} />
           ),
