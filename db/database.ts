@@ -5,6 +5,7 @@ export const db = SQLite.openDatabaseSync('githabit.db');
 
 export const initDB = () => {
   try {
+    db.execSync('PRAGMA foreign_keys = ON;');
     // Create Habits table
     db.execSync(`
       CREATE TABLE IF NOT EXISTS habits (

@@ -43,7 +43,7 @@ export default function Home() {
         {pinnedHabits.length === 0 ? (
           <View className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-4 rounded-md items-center">
             <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-2">
-              No Habits yet.
+              No pinned habits yet.
             </Text>
             <TouchableOpacity 
               onPress={() => router.push("/habits")}

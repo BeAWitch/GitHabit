@@ -81,6 +81,7 @@ export const updateHabit = (
 };
 
 export const deleteHabit = (id: number) => {
+  db.runSync('DELETE FROM check_ins WHERE habitId = ?;', [id]);
   db.runSync('DELETE FROM habits WHERE id = ?;', [id]);
 };
 
