@@ -17,8 +17,10 @@ import { Octicons } from "@expo/vector-icons";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateFormatter";
+import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { HabitFormModal } from "@/components/HabitFormModal";
+import { CommitModal } from "@/components/CommitModal";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
@@ -33,6 +35,7 @@ export default function HabitDetail() {
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [readmeHeight, setReadmeHeight] = useState(240);
   const [isReadmeFullScreen, setIsReadmeFullScreen] = useState(false);
+  const [isCommitModalVisible, setIsCommitModalVisible] = useState(false);
   const readmeStartHeight = useRef(240);
 
   useEffect(() => {
@@ -65,28 +68,7 @@ export default function HabitDetail() {
     })
   ).current;
 
-  const markdownStyle = useMemo(
-    () => ({
-      body: { color: color.text, fontSize: 14, lineHeight: 20 },
-      heading1: { color: color.text, fontSize: 20, marginTop: 6, marginBottom: 6 },
-      heading2: { color: color.text, fontSize: 18, marginTop: 6, marginBottom: 6 },
-      heading3: { color: color.text, fontSize: 16, marginTop: 6, marginBottom: 6 },
-      heading4: { color: color.text, fontSize: 15, marginTop: 6, marginBottom: 6 },
-      heading5: { color: color.text, fontSize: 14, marginTop: 6, marginBottom: 6 },
-      heading6: { color: color.text, fontSize: 13, marginTop: 6, marginBottom: 6 },
-      paragraph: { color: color.text, marginTop: 4, marginBottom: 4 },
-      strong: { color: color.text, fontWeight: "700" as const },
-      em: { color: color.text },
-      list_item: { color: color.text, marginTop: 2 },
-      bullet_list: { marginTop: 4, marginBottom: 4 },
-      ordered_list: { marginTop: 4, marginBottom: 4 },
-      code_inline: { backgroundColor: color.canvas, color: color.text },
-      code_block: { backgroundColor: color.canvas, color: color.text, padding: 8 },
-      fence: { backgroundColor: color.canvas, color: color.text, padding: 8 },
-      link: { color: color.link },
-    }),
-    [color]
-  );
+  const markdownStyle = useMemo(() => getMarkdownStyle(color), [color]);
 
   // Filter and sort recent check-ins
   const recentCheckIns = checkIns
@@ -198,7 +180,7 @@ export default function HabitDetail() {
           <TouchableOpacity
             className="px-3 py-2 rounded-md flex-row items-center"
             style={{ backgroundColor: color.primary }}
-            onPress={() => commitCheckIn(habitId, "Quick commit", 1)}
+            onPress={() => setIsCommitModalVisible(true)}
           >
             <Octicons name="git-commit" size={14} color="white" />
             <Text className="text-white font-semibold ml-2">Commit</Text>
@@ -331,6 +313,16 @@ export default function HabitDetail() {
         visible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}
         habitId={habitId}
+      />
+      <CommitModal
+        visible={isCommitModalVisible}
+        title={`Commit to ${habit.name}`}
+        unitLabel={habit.unitLabel}
+        unitType={habit.unitType}
+        onClose={() => setIsCommitModalVisible(false)}
+        onSubmit={(value, message) => {
+          commitCheckIn(habitId, message || "Quick commit", value);
+        }}
       />
       <Modal
         visible={isReadmeFullScreen}

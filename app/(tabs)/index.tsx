@@ -1,10 +1,11 @@
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useRouter } from "expo-router";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateFormatter";
 import { Octicons } from "@expo/vector-icons";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { CommitModal } from "@/components/CommitModal";
 
 export default function Home() {
   const { color } = useThemeColors();
@@ -12,12 +13,22 @@ export default function Home() {
   
   const { habits, checkIns, fetchData, commitCheckIn, fetchHabitDetail } = useHabitStore();
 
+  const [commitModalHabitId, setCommitModalHabitId] = useState<number | null>(null);
+
   useEffect(() => {
     fetchData();
   }, [fetchData]);
 
-  const pinnedHabits = habits.slice(0, 4); // Just mock "pinned" by taking first 4
+  const pinnedHabits = useMemo(
+    () => habits.filter((habit) => (habit.pinned ?? 0) > 0).slice(0, 4),
+    [habits]
+  );
   const recentActivity = checkIns.slice(0, 10);
+
+  const activeCommitHabit = useMemo(
+    () => habits.find((habit) => habit.id === commitModalHabitId) || null,
+    [commitModalHabitId, habits]
+  );
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
@@ -76,7 +87,7 @@ export default function Home() {
                 <TouchableOpacity
                   className="py-1 rounded-md items-center"
                   style={{ backgroundColor: color.primary }}
-                  onPress={() => commitCheckIn(habit.id, "Quick commit", 1)}
+                  onPress={() => setCommitModalHabitId(habit.id)}
                 >
                   <Text className="text-white text-xs font-bold">
                     Commit
@@ -132,6 +143,17 @@ export default function Home() {
         )}
       </View>
       <View className="h-10" />
+      <CommitModal
+        visible={Boolean(activeCommitHabit)}
+        title={activeCommitHabit ? `Commit to ${activeCommitHabit.name}` : "Commit"}
+        unitLabel={activeCommitHabit?.unitLabel || "times"}
+        unitType={activeCommitHabit?.unitType || "count"}
+        onClose={() => setCommitModalHabitId(null)}
+        onSubmit={(value, message) => {
+          if (!activeCommitHabit) return;
+          commitCheckIn(activeCommitHabit.id, message || "Quick commit", value);
+        }}
+      />
     </ScrollView>
   );
 }
