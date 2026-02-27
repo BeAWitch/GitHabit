@@ -13,8 +13,8 @@ interface HabitState {
   // Actions
   fetchData: () => void; // Syncs all local SQLite data into state
   fetchHabitDetail: (habitId: number) => void;
-  addHabit: (name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number) => void;
-  updateHabit: (id: number, name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number) => void;
+  addHabit: (name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number, status: 'active' | 'archived', pinned: number) => void;
+  updateHabit: (id: number, name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number, status: 'active' | 'archived', pinned: number) => void;
   removeHabit: (id: number) => void;
   commitCheckIn: (habitId: number, message: string, value: number) => void;
 }
@@ -83,13 +83,13 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     }
   },
 
-  addHabit: (name, description, plan, unitType, unitLabel, categoryId) => {
-    RepoAPI.createHabit(name, description, plan, unitType, unitLabel, categoryId);
+  addHabit: (name, description, plan, unitType, unitLabel, categoryId, status, pinned) => {
+    RepoAPI.createHabit(name, description, plan, unitType, unitLabel, categoryId, status, pinned);
     get().fetchData(); // Refresh state after mutation
   },
 
-  updateHabit: (id, name, description, plan, unitType, unitLabel, categoryId) => {
-    RepoAPI.updateHabit(id, name, description, plan, unitType, unitLabel, categoryId);
+  updateHabit: (id, name, description, plan, unitType, unitLabel, categoryId, status, pinned) => {
+    RepoAPI.updateHabit(id, name, description, plan, unitType, unitLabel, categoryId, status, pinned);
     get().fetchData(); // Refresh state after mutation
   },
 

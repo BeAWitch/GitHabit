@@ -52,11 +52,13 @@ export const createHabit = (
   unitType: 'count' | 'binary',
   unitLabel: string,
   categoryId: number,
+  status: 'active' | 'archived' = 'active',
+  pinned: number = 0,
   color: string = '#238636' // Fallback
 ): number => {
   const result = db.runSync(
-    'INSERT INTO habits (name, description, plan, unitType, unitLabel, categoryId, color, createdAt, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);',
-    [name, description, plan, unitType, unitLabel, categoryId, color, Date.now(), 'active']
+    'INSERT INTO habits (name, description, plan, unitType, unitLabel, categoryId, color, createdAt, status, pinned) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);',
+    [name, description, plan, unitType, unitLabel, categoryId, color, Date.now(), status, pinned]
   );
   return result.lastInsertRowId;
 };
@@ -68,11 +70,13 @@ export const updateHabit = (
   plan: string,
   unitType: 'count' | 'binary',
   unitLabel: string,
-  categoryId: number
+  categoryId: number,
+  status: 'active' | 'archived',
+  pinned: number
 ) => {
   db.runSync(
-    'UPDATE habits SET name = ?, description = ?, plan = ?, unitType = ?, unitLabel = ?, categoryId = ? WHERE id = ?;',
-    [name, description, plan, unitType, unitLabel, categoryId, id]
+    'UPDATE habits SET name = ?, description = ?, plan = ?, unitType = ?, unitLabel = ?, categoryId = ?, status = ?, pinned = ? WHERE id = ?;',
+    [name, description, plan, unitType, unitLabel, categoryId, status, pinned, id]
   );
 };
 

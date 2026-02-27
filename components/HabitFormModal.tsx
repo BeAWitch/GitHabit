@@ -1,5 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
+  Animated,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -33,6 +34,12 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [unitType, setUnitType] = useState<"count" | "binary">("count");
   const [unitLabel, setUnitLabel] = useState("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
+  const [status, setStatus] = useState<"active" | "archived">("active");
+  const [pinned, setPinned] = useState(false);
+  const [statusTrackWidth, setStatusTrackWidth] = useState(0);
+  const [pinnedTrackWidth, setPinnedTrackWidth] = useState(0);
+  const statusAnim = useRef(new Animated.Value(0)).current;
+  const pinnedAnim = useRef(new Animated.Value(0)).current;
 
   // Initialize form when modal opens or habitId changes
   useEffect(() => {
@@ -46,6 +53,8 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
           setUnitType(habit.unitType || "count");
           setUnitLabel(habit.unitLabel || "");
           setSelectedCategoryId(habit.categoryId);
+          setStatus(habit.status || "active");
+          setPinned(Boolean(habit.pinned));
         }
       } else {
         setName("");
@@ -53,12 +62,30 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         setPlan("");
         setUnitType("count");
         setUnitLabel("");
+        setStatus("active");
+        setPinned(false);
         if (categories.length > 0) {
           setSelectedCategoryId(categories[0].id);
         }
       }
     }
   }, [visible, habitId, habits, categories]);
+
+  useEffect(() => {
+    Animated.timing(statusAnim, {
+      toValue: status === "archived" ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [status, statusAnim]);
+
+  useEffect(() => {
+    Animated.timing(pinnedAnim, {
+      toValue: pinned ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }, [pinned, pinnedAnim]);
 
   const handleSubmit = () => {
     if (!name.trim() || selectedCategoryId === null) return;
@@ -73,7 +100,9 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         plan.trim(),
         unitType,
         finalUnitLabel,
-        selectedCategoryId
+        selectedCategoryId,
+        status,
+        pinned ? 1 : 0
       );
     } else {
       addHabit(
@@ -82,7 +111,9 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         plan.trim(),
         unitType,
         finalUnitLabel,
-        selectedCategoryId
+        selectedCategoryId,
+        status,
+        pinned ? 1 : 0
       );
     }
     onClose();
@@ -109,7 +140,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </TouchableOpacity>
           </View>
 
-          <ScrollView className="p-4">
+          <ScrollView className="p-4" keyboardShouldPersistTaps="handled">
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
               Habit name <Text className="text-red-500">*</Text>
             </Text>
@@ -214,7 +245,106 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                     {c.name}
                   </Text>
                 </TouchableOpacity>
-              ))}
+                ))}
+            </View>
+
+            <View className="flex-row mb-6">
+              <View className="flex-1 mr-2">
+                <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
+                  Status
+                </Text>
+                <View
+                  className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden"
+                  onLayout={(event) => setStatusTrackWidth(event.nativeEvent.layout.width)}
+                >
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      left: 2,
+                      height: "85%",
+                      width: statusTrackWidth ? statusTrackWidth / 2 - 4 : 0,
+                      borderRadius: 6,
+                      backgroundColor: color.border,
+                      transform: [
+                        {
+                          translateX: statusAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, statusTrackWidth ? statusTrackWidth / 2 : 0],
+                          }),
+                        },
+                      ],
+                    }}
+                  />
+                  <View className="flex-row">
+                    <TouchableOpacity
+                      className="flex-1 py-2 items-center"
+                      onPress={() => setStatus("active")}
+                    >
+                      <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+                        Active
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="flex-1 py-2 items-center"
+                      onPress={() => setStatus("archived")}
+                    >
+                      <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+                        Archived
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
+              <View className="flex-1 ml-2">
+                <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
+                  Pinned
+                </Text>
+                <View
+                  className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden"
+                  onLayout={(event) => setPinnedTrackWidth(event.nativeEvent.layout.width)}
+                >
+                  <Animated.View
+                    pointerEvents="none"
+                    style={{
+                      position: "absolute",
+                      top: 2,
+                      left: 2,
+                      height: "85%",
+                      width: pinnedTrackWidth ? pinnedTrackWidth / 2 - 4 : 0,
+                      borderRadius: 6,
+                      backgroundColor: color.border,
+                      transform: [
+                        {
+                          translateX: pinnedAnim.interpolate({
+                            inputRange: [0, 1],
+                            outputRange: [0, pinnedTrackWidth ? pinnedTrackWidth / 2 : 0],
+                          }),
+                        },
+                      ],
+                    }}
+                  />
+                  <View className="flex-row">
+                    <TouchableOpacity
+                      className="flex-1 py-2 items-center"
+                      onPress={() => setPinned(true)}
+                    >
+                      <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+                        Yes
+                      </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      className="flex-1 py-2 items-center"
+                      onPress={() => setPinned(false)}
+                    >
+                      <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+                        No
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </View>
             </View>
           </ScrollView>
 

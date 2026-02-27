@@ -16,7 +16,8 @@ export const initDB = () => {
         unitLabel TEXT DEFAULT 'done',
         color TEXT DEFAULT 'ghGreen',
         createdAt INTEGER NOT NULL,
-        status TEXT DEFAULT 'active'
+        status TEXT DEFAULT 'active',
+        pinned INTEGER DEFAULT 0
       );
     `);
 
@@ -44,6 +45,15 @@ export const initDB = () => {
       const message = error instanceof Error ? error.message : String(error);
       if (!message.includes('duplicate column name')) {
         console.error('Failed to migrate habits.unitLabel:', error);
+      }
+    }
+
+    try {
+      db.execSync('ALTER TABLE habits ADD COLUMN pinned INTEGER DEFAULT 0;');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('duplicate column name')) {
+        console.error('Failed to migrate habits.pinned:', error);
       }
     }
 

@@ -16,6 +16,7 @@ export interface Habit {
   categoryName: string;
   createdAt: number; // Unix timestamp
   status: 'active' | 'archived';
+  pinned: number; // 0 or 1
 }
 
 export interface CheckIn {
