@@ -1,16 +1,54 @@
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useThemeStore } from "@/store/themeStore";
+import { useHabitStore } from "@/store/habitStore";
 import { Octicons } from "@expo/vector-icons";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
+import { ContributionGraph } from "@/components/ContributionGraph";
 
 export default function Profile() {
   const { theme, setTheme } = useThemeStore();
   const { color } = useThemeColors();
+  const { globalContributions, habits } = useHabitStore();
+
+  const totalContributions = Object.values(globalContributions).reduce((a, b) => a + b, 0);
+
+  // Compute a simple streak logic across all check-ins
+  let currentStreak = 0;
+  const today = new Date();
+  const todayStr = [
+    today.getFullYear(),
+    String(today.getMonth() + 1).padStart(2, "0"),
+    String(today.getDate()).padStart(2, "0"),
+  ].join("-");
+  
+  if (globalContributions[todayStr]) {
+    currentStreak++;
+  }
+  
+  // Starting yesterday, check consecutive days
+  const yesterday = new Date(today);
+  yesterday.setDate(today.getDate() - 1);
+  let checkDate = yesterday;
+  
+  while (true) {
+    const checkStr = [
+      checkDate.getFullYear(),
+      String(checkDate.getMonth() + 1).padStart(2, "0"),
+      String(checkDate.getDate()).padStart(2, "0"),
+    ].join("-");
+    
+    if (globalContributions[checkStr]) {
+      currentStreak++;
+      checkDate.setDate(checkDate.getDate() - 1);
+    } else {
+      break;
+    }
+  }
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
       {/* Profile Header */}
-      <View className="flex-row items-center mb-6">
+      <View className="flex-row items-center mb-6 mt-4">
         <Image
           source={{ uri: "https://avatars.githubusercontent.com/u/1?v=4" }} // Placeholder octocat
           className="w-16 h-16 rounded-full border border-github-lightBorder dark:border-github-darkBorder mr-4"
@@ -41,17 +79,17 @@ export default function Profile() {
       <View className="flex-row items-center mb-6">
         <View className="mr-6">
           <Text className="font-bold text-github-lightText dark:text-github-darkText text-base">
-            42{" "}
+            {habits.length}{" "}
             <Text className="font-normal text-github-lightMuted dark:text-github-darkMuted">
-              followers
+              habits
             </Text>
           </Text>
         </View>
         <View>
           <Text className="font-bold text-github-lightText dark:text-github-darkText text-base">
-            12{" "}
+            {currentStreak}{" "}
             <Text className="font-normal text-github-lightMuted dark:text-github-darkMuted">
-              following
+              day streak
             </Text>
           </Text>
         </View>
@@ -80,31 +118,9 @@ export default function Profile() {
       {/* Contribution Graph Section */}
       <View className="mb-6">
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          1,245 contributions in the last year
+          {totalContributions} contributions in the last year
         </Text>
-
-        {/* Heatmap Placeholder Box */}
-        <View className="bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md p-3">
-          {/* Mock Heatmap Matrix */}
-          <View className="flex-row flex-wrap gap-1">
-            {/* Render some fake squares */}
-            {Array.from({ length: 42 }).map((_, i) => {
-              const levels = color.heatmap;
-              const randomLevel =
-                levels[Math.floor(Math.random() * levels.length)];
-              return (
-                <View
-                  key={i}
-                  className="w-3 h-3 rounded-sm"
-                  style={{ backgroundColor: randomLevel }}
-                />
-              );
-            })}
-          </View>
-          <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mt-3 text-right">
-            Less to More (mock data)
-          </Text>
-        </View>
+        <ContributionGraph contributions={globalContributions} days={365} />
       </View>
 
       {/* Organizations / Pinned Placeholder */}
@@ -118,6 +134,7 @@ export default function Profile() {
           <View className="w-8 h-8 rounded-md bg-green-500" />
         </View>
       </View>
+      <View className="h-10" />
     </ScrollView>
   );
 }

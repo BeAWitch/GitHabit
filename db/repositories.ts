@@ -9,7 +9,7 @@ export const getCategories = (): Category[] => {
 };
 
 /**
- * Habit (Repository) Operations
+ * Habit Operations
  */
 export const getHabits = (): Habit[] => {
   return db.getAllSync<Habit>(`
@@ -59,6 +59,21 @@ export const createHabit = (
     [name, description, plan, unitType, unitLabel, categoryId, color, Date.now(), 'active']
   );
   return result.lastInsertRowId;
+};
+
+export const updateHabit = (
+  id: number,
+  name: string,
+  description: string,
+  plan: string,
+  unitType: 'count' | 'binary',
+  unitLabel: string,
+  categoryId: number
+) => {
+  db.runSync(
+    'UPDATE habits SET name = ?, description = ?, plan = ?, unitType = ?, unitLabel = ?, categoryId = ? WHERE id = ?;',
+    [name, description, plan, unitType, unitLabel, categoryId, id]
+  );
 };
 
 export const deleteHabit = (id: number) => {

@@ -23,6 +23,7 @@ module.exports = {
           darkLink: '#58a6ff',
           darkPrimary: '#238636',
           darkSuccess: '#238636',
+          darkDanger: '#f85149',
           
           lightBg: '#ffffff',
           lightBorder: '#d0d7de',
@@ -33,10 +34,11 @@ module.exports = {
           lightLink: '#0969da',
           lightPrimary: '#1f883d', // Main button green
           lightSuccess: '#1f883d',
+          lightDanger: '#da3633',
           
           // Contribution Graph Colors (Dark Theme Base)
-          darkLevel0: '#161b22',       // Empty cell
-          darkLevel1: '#0e4429',       // Lowest intensity
+          darkLevel0: '#21262d',       // Empty cell (Enhanced contrast)
+          darkLevel1: '#00482b',       // Lowest intensity
           darkLevel2: '#006d32',       // Moderate
           darkLevel3: '#26a641',       // High
           darkLevel4: '#39d353',       // Maximum intensity

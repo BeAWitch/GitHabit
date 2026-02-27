@@ -14,6 +14,7 @@ interface HabitState {
   fetchData: () => void; // Syncs all local SQLite data into state
   fetchHabitDetail: (habitId: number) => void;
   addHabit: (name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number) => void;
+  updateHabit: (id: number, name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number) => void;
   removeHabit: (id: number) => void;
   commitCheckIn: (habitId: number, message: string, value: number) => void;
 }
@@ -84,6 +85,11 @@ export const useHabitStore = create<HabitState>((set, get) => ({
 
   addHabit: (name, description, plan, unitType, unitLabel, categoryId) => {
     RepoAPI.createHabit(name, description, plan, unitType, unitLabel, categoryId);
+    get().fetchData(); // Refresh state after mutation
+  },
+
+  updateHabit: (id, name, description, plan, unitType, unitLabel, categoryId) => {
+    RepoAPI.updateHabit(id, name, description, plan, unitType, unitLabel, categoryId);
     get().fetchData(); // Refresh state after mutation
   },
 

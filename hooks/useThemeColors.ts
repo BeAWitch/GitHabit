@@ -14,6 +14,7 @@ export type ThemeColors = {
   primary: string;
   link: string;
   success: string;
+  danger: string;
   active: string;
   heatmap: HeatmapLevels;
 };
@@ -28,6 +29,7 @@ const PALETTE: Record<"light" | "dark", ThemeColors> = {
     primary: githubColors.lightPrimary,
     link: githubColors.lightLink,
     success: githubColors.lightSuccess,
+    danger: githubColors.lightDanger,
     active: githubColors.lightActive,
     heatmap: [
       githubColors.lightLevel0,
@@ -46,6 +48,7 @@ const PALETTE: Record<"light" | "dark", ThemeColors> = {
     primary: githubColors.darkPrimary,
     link: githubColors.darkLink,
     success: githubColors.darkSuccess,
+    danger: githubColors.darkDanger,
     active: githubColors.darkActive,
     heatmap: [
       githubColors.darkLevel0,
