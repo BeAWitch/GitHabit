@@ -21,19 +21,6 @@ export default function Home() {
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
-      {/* Search Header Placeholder */}
-      <View className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas p-2 rounded-md border border-github-lightBorder dark:border-github-darkBorder mb-6">
-        <Octicons
-          name="search"
-          size={16}
-          color={color.muted}
-          className="mr-2"
-        />
-        <Text className="text-github-lightMuted dark:text-github-darkMuted ml-2 flex-1">
-          Jump to...
-        </Text>
-      </View>
-
       {/* Pinned Habits Section */}
       <View className="mb-6">
         <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
