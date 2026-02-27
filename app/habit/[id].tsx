@@ -1,6 +1,17 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import {
+  Alert,
+  Dimensions,
+  Modal,
+  PanResponder,
+  ScrollView,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+
 import { useLocalSearchParams, useRouter } from "expo-router";
-import { ScrollView, Text, TouchableOpacity, View, Alert } from "react-native";
+import Markdown from "react-native-markdown-display";
 import { Octicons } from "@expo/vector-icons";
 
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -20,6 +31,9 @@ export default function HabitDetail() {
     useHabitStore();
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  const [readmeHeight, setReadmeHeight] = useState(240);
+  const [isReadmeFullScreen, setIsReadmeFullScreen] = useState(false);
+  const readmeStartHeight = useRef(240);
 
   useEffect(() => {
     if (!isNaN(habitId)) {
@@ -30,6 +44,49 @@ export default function HabitDetail() {
   const habit = habits.find((h) => h.id === habitId);
   const stats = habitStats[habitId] || { total: 0, lastTimestamp: null };
   const contributions = habitContributions[habitId] || {};
+
+  const screenHeight = Dimensions.get("window").height;
+  const minReadmeHeight = 160;
+  const maxReadmeHeight = Math.min(Math.round(screenHeight * 0.65), 520);
+
+  const clampHeight = (value: number) =>
+    Math.max(minReadmeHeight, Math.min(maxReadmeHeight, value));
+
+  const readmePanResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        readmeStartHeight.current = readmeHeight;
+      },
+      onPanResponderMove: (_, gesture) => {
+        const nextHeight = clampHeight(readmeStartHeight.current + gesture.dy);
+        setReadmeHeight(nextHeight);
+      },
+    })
+  ).current;
+
+  const markdownStyle = useMemo(
+    () => ({
+      body: { color: color.text, fontSize: 14, lineHeight: 20 },
+      heading1: { color: color.text, fontSize: 20, marginTop: 6, marginBottom: 6 },
+      heading2: { color: color.text, fontSize: 18, marginTop: 6, marginBottom: 6 },
+      heading3: { color: color.text, fontSize: 16, marginTop: 6, marginBottom: 6 },
+      heading4: { color: color.text, fontSize: 15, marginTop: 6, marginBottom: 6 },
+      heading5: { color: color.text, fontSize: 14, marginTop: 6, marginBottom: 6 },
+      heading6: { color: color.text, fontSize: 13, marginTop: 6, marginBottom: 6 },
+      paragraph: { color: color.text, marginTop: 4, marginBottom: 4 },
+      strong: { color: color.text, fontWeight: "700" as const },
+      em: { color: color.text },
+      list_item: { color: color.text, marginTop: 2 },
+      bullet_list: { marginTop: 4, marginBottom: 4 },
+      ordered_list: { marginTop: 4, marginBottom: 4 },
+      code_inline: { backgroundColor: color.canvas, color: color.text },
+      code_block: { backgroundColor: color.canvas, color: color.text, padding: 8 },
+      fence: { backgroundColor: color.canvas, color: color.text, padding: 8 },
+      link: { color: color.link },
+    }),
+    [color]
+  );
 
   // Filter and sort recent check-ins
   const recentCheckIns = checkIns
@@ -168,13 +225,36 @@ export default function HabitDetail() {
       </View>
 
       {/* README-like plan */}
-      <View className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md p-4 mb-6">
-        <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          README
-        </Text>
-        <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
-          {habit.plan || "No plan defined yet. Start by setting a goal!"}
-        </Text>
+      <View
+        className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md mb-6"
+        style={{ height: readmeHeight }}
+      >
+        <View className="flex-row items-center justify-between p-4 border-b border-github-lightBorder dark:border-github-darkBorder">
+          <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+            README
+          </Text>
+          <TouchableOpacity
+            onPress={() => setIsReadmeFullScreen(true)}
+            accessibilityLabel="Full screen README"
+          >
+            <Octicons name="screen-full" size={16} color={color.muted} />
+          </TouchableOpacity>
+        </View>
+        <ScrollView className="px-4 py-3" nestedScrollEnabled>
+          {habit.plan ? (
+            <Markdown style={markdownStyle}>{habit.plan}</Markdown>
+          ) : (
+            <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
+              No plan defined yet. Start by setting a goal!
+            </Text>
+          )}
+        </ScrollView>
+        <View
+          className="absolute bottom-2 right-2 w-6 h-6 border border-github-lightBorder dark:border-github-darkBorder rounded-md items-center justify-center"
+          {...readmePanResponder.panHandlers}
+        >
+          <View className="w-3 h-3 border-r border-b border-github-lightMuted dark:border-github-darkMuted" />
+        </View>
       </View>
 
       {/* Stats */}
@@ -252,6 +332,34 @@ export default function HabitDetail() {
         onClose={() => setIsEditModalVisible(false)}
         habitId={habitId}
       />
+      <Modal
+        visible={isReadmeFullScreen}
+        animationType="slide"
+        onRequestClose={() => setIsReadmeFullScreen(false)}
+      >
+        <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg">
+          <View className="flex-row items-center justify-between px-4 py-4 border-b border-github-lightBorder dark:border-github-darkBorder">
+            <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
+              README
+            </Text>
+            <TouchableOpacity
+              onPress={() => setIsReadmeFullScreen(false)}
+              accessibilityLabel="Exit full screen README"
+            >
+              <Octicons name="screen-normal" size={18} color={color.muted} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView className="px-4 py-3">
+            {habit.plan ? (
+              <Markdown style={markdownStyle}>{habit.plan}</Markdown>
+            ) : (
+              <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
+                No plan defined yet. Start by setting a goal!
+              </Text>
+            )}
+          </ScrollView>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
