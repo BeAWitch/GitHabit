@@ -25,6 +25,7 @@ export interface CheckIn {
   habitId: number;
   message: string;
   value: number; // count or 1/0 for binary
+  targetValue?: number; // Snapshot of the habit's targetValue at the time of commit
   timestamp: number; // Unix timestamp
   dateString: string; // YYYY-MM-DD for easy grouping (the heatmap logic)
 }
@@ -43,4 +44,5 @@ export interface TimelineActivity {
 export interface ContributionData {
   dateString: string;
   count: number;
+  targetValue?: number;
 }

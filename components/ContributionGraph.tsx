@@ -8,6 +8,7 @@ interface ContributionGraphProps {
   endDate?: Date;
   days?: number;
   targetValue?: number;
+  targetValues?: Record<string, number>;
 }
 
 export const ContributionGraph: React.FC<ContributionGraphProps> = ({
@@ -15,6 +16,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   endDate = new Date(),
   days = getDaysInYear(),
   targetValue,
+  targetValues,
 }) => {
   const { color } = useThemeColors();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -35,7 +37,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
     const paddingDays = startDate.getDay();
 
     for (let i = 0; i < paddingDays; i++) {
-      allDays.push({ dateString: "", count: -1, dayOfWeek: i });
+      allDays.push({ dateString: "", count: -1, targetValue: undefined, dayOfWeek: i });
     }
 
     for (let i = days - 1; i >= 0; i--) {
@@ -47,12 +49,14 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
         String(d.getDate()).padStart(2, "0"),
       ].join("-");
       const count = contributions[dateString] || 0;
+      const dailyTarget = targetValues?.[dateString];
       if (count > currentMax) {
         currentMax = count;
       }
       allDays.push({
         dateString,
         count,
+        targetValue: dailyTarget,
         dayOfWeek: d.getDay(),
       });
     }
@@ -92,7 +96,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
     }
 
     return { columns: cols, months, maxCount: currentMax };
-  }, [contributions, days, endDate]);
+  }, [contributions, days, endDate, targetValues]);
 
   return (
     <View className="bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md p-3">
@@ -142,12 +146,15 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                   let isTargetMet = false;
 
                   if (day.count > 0) {
-                    if (targetValue && targetValue > 0) {
-                      if (day.count >= targetValue) {
+                    const todayStr = new Date().toISOString().split('T')[0];
+                    // Always use current targetValue for today, otherwise use historical if available
+                    const activeTarget = (day.dateString === todayStr) ? (targetValue ?? day.targetValue) : (day.targetValue ?? targetValue);
+                    if (activeTarget && activeTarget > 0) {
+                      if (day.count >= activeTarget) {
                         levelIndex = 4;
                         isTargetMet = true;
                       } else {
-                        const percentile = day.count / targetValue;
+                        const percentile = day.count / activeTarget;
                         if (percentile <= 0.33) levelIndex = 1;
                         else if (percentile <= 0.66) levelIndex = 2;
                         else levelIndex = 3;

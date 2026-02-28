@@ -9,6 +9,7 @@ interface HabitState {
   recentActivities: TimelineActivity[];
   globalContributions: Record<string, number>; // Dictionary indexed by date string (YYYY-MM-DD)
   habitContributions: Record<number, Record<string, number>>;
+  habitTargetValues: Record<number, Record<string, number>>; // Stores target values per day per habit
   habitStats: Record<number, { total: number; lastTimestamp: number | null }>;
   
   // Actions
@@ -29,6 +30,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   recentActivities: [],
   globalContributions: {},
   habitContributions: {},
+  habitTargetValues: {},
   habitStats: {},
 
   fetchData: () => {
@@ -68,15 +70,23 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       const contributionsData = RepoAPI.getHabitContributions(habitId);
       const stats = RepoAPI.getHabitStats(habitId);
       const contributionMap: Record<string, number> = {};
+      const targetValuesMap: Record<string, number> = {};
 
       contributionsData.forEach((c) => {
         contributionMap[c.dateString] = c.count;
+        if (c.targetValue !== undefined) {
+           targetValuesMap[c.dateString] = c.targetValue;
+        }
       });
 
       set((state) => ({
         habitContributions: {
           ...state.habitContributions,
           [habitId]: contributionMap,
+        },
+        habitTargetValues: {
+          ...state.habitTargetValues,
+          [habitId]: targetValuesMap,
         },
         habitStats: {
           ...state.habitStats,
@@ -104,7 +114,8 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   },
 
   commitCheckIn: (habitId, message, value) => {
-    RepoAPI.createCheckIn(habitId, message, value);
+    const targetValue = get().habits.find(h => h.id === habitId)?.targetValue || 1;
+    RepoAPI.createCheckIn(habitId, message, value, targetValue);
     get().fetchData();
     get().fetchHabitDetail(habitId);
   },

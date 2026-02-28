@@ -115,6 +115,7 @@ export const initDB = () => {
         habitId INTEGER NOT NULL,
         message TEXT,
         value INTEGER DEFAULT 1,
+        targetValue INTEGER DEFAULT 1,
         timestamp INTEGER NOT NULL,
         dateString TEXT NOT NULL,
         FOREIGN KEY(habitId) REFERENCES habits(id) ON DELETE CASCADE
@@ -127,6 +128,15 @@ export const initDB = () => {
       const message = error instanceof Error ? error.message : String(error);
       if (!message.includes('duplicate column name')) {
         console.error('Failed to migrate check_ins.value:', error);
+      }
+    }
+    
+    try {
+      db.execSync('ALTER TABLE check_ins ADD COLUMN targetValue INTEGER DEFAULT 1;');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('duplicate column name')) {
+        console.error('Failed to migrate check_ins.targetValue:', error);
       }
     }
     

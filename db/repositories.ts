@@ -89,14 +89,14 @@ export const deleteHabit = (id: number) => {
 /**
  * Check-In (Commit) Operations
  */
-export const createCheckIn = (habitId: number, message: string = '', value: number = 1): number => {
+export const createCheckIn = (habitId: number, message: string = '', value: number = 1, targetValue: number = 1): number => {
   const now = new Date();
   const timestamp = now.getTime();
   const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
 
   const result = db.runSync(
-    'INSERT INTO check_ins (habitId, message, value, timestamp, dateString) VALUES (?, ?, ?, ?, ?);',
-    [habitId, message, value, timestamp, dateString]
+    'INSERT INTO check_ins (habitId, message, value, targetValue, timestamp, dateString) VALUES (?, ?, ?, ?, ?, ?);',
+    [habitId, message, value, targetValue, timestamp, dateString]
   );
   return result.lastInsertRowId;
 };
@@ -172,7 +172,7 @@ export const getRecentActivities = (): TimelineActivity[] => {
 export const getGlobalContributions = (): ContributionData[] => {
   // Groups all check-ins across all habits by date to generate the global heatmap
   return db.getAllSync<ContributionData>(`
-    SELECT dateString, SUM(value) as count 
+    SELECT dateString, SUM(value) as count, MAX(targetValue) as targetValue
     FROM check_ins 
     GROUP BY dateString;
   `);
@@ -180,7 +180,7 @@ export const getGlobalContributions = (): ContributionData[] => {
 
 export const getHabitContributions = (habitId: number): ContributionData[] => {
   return db.getAllSync<ContributionData>(`
-    SELECT dateString, SUM(value) as count 
+    SELECT dateString, SUM(value) as count, MAX(targetValue) as targetValue
     FROM check_ins 
     WHERE habitId = ?
     GROUP BY dateString;

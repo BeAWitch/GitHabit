@@ -29,14 +29,26 @@ export default function Profile() {
 
   const allGoalsMetPerDay = useMemo(() => {
     const dailyHabitSums: Record<string, Record<number, number>> = {};
+    const dailyHabitTargets: Record<string, Record<number, number>> = {};
+
     checkIns.forEach(ci => {
       if (!dailyHabitSums[ci.dateString]) dailyHabitSums[ci.dateString] = {};
+      if (!dailyHabitTargets[ci.dateString]) dailyHabitTargets[ci.dateString] = {};
+
       dailyHabitSums[ci.dateString][ci.habitId] = (dailyHabitSums[ci.dateString][ci.habitId] || 0) + ci.value;
+      if (ci.targetValue !== undefined) {
+         // Keep the latest target value for that day if multiple commits exist
+         // Alternatively, we could take the max. Let's take the max target value observed that day.
+         dailyHabitTargets[ci.dateString][ci.habitId] = Math.max(
+           dailyHabitTargets[ci.dateString][ci.habitId] || 0,
+           ci.targetValue
+         );
+      }
     });
 
-    const habitTargets: Record<number, number> = {};
+    const currentHabitTargets: Record<number, number> = {};
     habits.forEach(h => {
-      habitTargets[h.id] = h.targetValue || 1;
+      currentHabitTargets[h.id] = h.targetValue || 1;
     });
 
     const metPerDay: Record<string, number> = {};
@@ -45,7 +57,13 @@ export default function Profile() {
       let goalsMet = 0;
       for (const habitIdStr in sums) {
         const hId = parseInt(habitIdStr);
-        const target = habitTargets[hId] || 1;
+        // Use the historically saved target for that day, or fallback to current target
+        // If the date is today, always use the current habit target
+        const todayStr = new Date().toISOString().split('T')[0];
+        let target = currentHabitTargets[hId] || 1;
+        if (dateStr !== todayStr) {
+          target = dailyHabitTargets[dateStr]?.[hId] || target;
+        }
         if (sums[hId] >= target) {
           goalsMet++;
         }

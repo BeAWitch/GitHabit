@@ -42,6 +42,7 @@ export default function HabitDetail() {
     checkIns,
     habitStats,
     habitContributions,
+    habitTargetValues,
     fetchHabitDetail,
     commitCheckIn,
     updateCheckIn,
@@ -74,6 +75,11 @@ export default function HabitDetail() {
   const contributions = useMemo(
     () => habitContributions[habitId] || {},
     [habitContributions, habitId],
+  );
+  
+  const targetValues = useMemo(
+    () => habitTargetValues[habitId] || {},
+    [habitTargetValues, habitId]
   );
 
   const screenHeight = Dimensions.get("window").height;
@@ -169,9 +175,12 @@ export default function HabitDetail() {
   ].join("-");
 
   const todayValue = contributions[todayStr] || 0;
-  const targetValue = habit.targetValue || 1;
+  // If the target for today is different than the habit's current target
+  // (e.g. they changed it today but haven't committed yet, or they changed it after committing),
+  // we should evaluate today's goal against the *current* target to be intuitive.
+  const todayTarget = habit.targetValue || 1;
 
-  if (todayValue >= targetValue) {
+  if (todayValue >= todayTarget) {
     currentStreak++;
   }
 
@@ -187,7 +196,9 @@ export default function HabitDetail() {
       String(checkDate.getDate()).padStart(2, "0"),
     ].join("-");
 
-    if ((contributions[checkStr] || 0) >= targetValue) {
+    const dailyTarget = targetValues[checkStr] || habit.targetValue || 1;
+
+    if ((contributions[checkStr] || 0) >= dailyTarget) {
       currentStreak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
@@ -396,6 +407,7 @@ export default function HabitDetail() {
           days={graphDays}
           endDate={graphEndDate}
           targetValue={habit.targetValue}
+          targetValues={targetValues}
         />
       </View>
 

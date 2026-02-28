@@ -207,8 +207,7 @@ export default function Home() {
               // We need habitContributions from store for calculating today's progress
               const contributions = useHabitStore.getState().habitContributions[habitId] || {};
               const todayCount = contributions[todayStr] || 0;
-              // Goal logic: use goalTarget if present, otherwise default to 1
-              const targetCount = (habit as any).goalTarget || 1;
+              const targetCount = habit.targetValue || 1;
 
               return (
                 <View
