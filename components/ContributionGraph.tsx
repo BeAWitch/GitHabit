@@ -15,11 +15,12 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Generate heatmap data grouped by columns (weeks)
-  const columns = useMemo(() => {
+  const { columns, maxCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
     const allDays = [];
+    let currentMax = 0;
     
     // Calculate the start date
     const startDate = new Date(today);
@@ -40,9 +41,13 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
         String(d.getMonth() + 1).padStart(2, "0"),
         String(d.getDate()).padStart(2, "0"),
       ].join("-");
+      const count = contributions[dateString] || 0;
+      if (count > currentMax) {
+        currentMax = count;
+      }
       allDays.push({ 
         dateString, 
-        count: contributions[dateString] || 0,
+        count,
         dayOfWeek: d.getDay()
       });
     }
@@ -53,7 +58,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
       cols.push(allDays.slice(i, i + 7));
     }
     
-    return cols;
+    return { columns: cols, maxCount: currentMax };
   }, [contributions, days]);
 
   return (
@@ -75,10 +80,26 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                 
                 const levels = color.heatmap;
                 let levelIndex = 0;
-                if (day.count === 1) levelIndex = 1;
-                else if (day.count >= 2 && day.count <= 3) levelIndex = 2;
-                else if (day.count >= 4 && day.count <= 5) levelIndex = 3;
-                else if (day.count >= 6) levelIndex = 4;
+                
+                if (day.count > 0) {
+                  if (maxCount <= 4) {
+                    // If max count is very low, just map directly to levels (1->1, 2->2, etc.)
+                    levelIndex = Math.min(4, day.count);
+                  } else {
+                    // Dynamic scaling for higher counts. Level 1 is always > 0.
+                    // The remaining range (maxCount - 1) is divided into 3 buckets (levels 2, 3, 4)
+                    const percentile = (day.count - 1) / (maxCount - 1);
+                    if (percentile === 0) {
+                      levelIndex = 1;
+                    } else if (percentile <= 0.33) {
+                      levelIndex = 2;
+                    } else if (percentile <= 0.66) {
+                      levelIndex = 3;
+                    } else {
+                      levelIndex = 4;
+                    }
+                  }
+                }
 
                 return (
                   <View

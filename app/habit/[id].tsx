@@ -21,6 +21,7 @@ import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { HabitFormModal } from "@/components/HabitFormModal";
 import { CommitModal } from "@/components/CommitModal";
+import { SimpleLineChart } from "@/components/SimpleLineChart";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
@@ -46,7 +47,7 @@ export default function HabitDetail() {
 
   const habit = habits.find((h) => h.id === habitId);
   const stats = habitStats[habitId] || { total: 0, lastTimestamp: null };
-  const contributions = habitContributions[habitId] || {};
+  const contributions = useMemo(() => habitContributions[habitId] || {}, [habitContributions, habitId]);
 
   const screenHeight = Dimensions.get("window").height;
   const minReadmeHeight = 160;
@@ -69,6 +70,26 @@ export default function HabitDetail() {
   ).current;
 
   const markdownStyle = useMemo(() => getMarkdownStyle(color), [color]);
+
+  // Compute last 30 days data for the line chart
+  const last30DaysData = useMemo(() => {
+    const data = [];
+    const today = new Date();
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const dateStr = [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, "0"),
+        String(d.getDate()).padStart(2, "0"),
+      ].join("-");
+      data.push({
+        date: dateStr,
+        value: contributions[dateStr] || 0,
+      });
+    }
+    return data;
+  }, [contributions]);
 
   // Filter and sort recent check-ins
   const recentCheckIns = checkIns
@@ -246,7 +267,15 @@ export default function HabitDetail() {
             {stats.total}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-            commits ({habit.unitLabel})
+            commits
+          </Text>
+        </View>
+        <View className="mr-6">
+          <Text className="text-base font-bold text-github-lightText dark:text-github-darkText">
+            {stats.total}
+          </Text>
+          <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+            {habit.unitLabel}
           </Text>
         </View>
         <View>
@@ -265,6 +294,14 @@ export default function HabitDetail() {
           Contribution activity
         </Text>
         <ContributionGraph contributions={contributions} days={84} />
+      </View>
+
+      {/* Daily changes chart */}
+      <View className="mb-6">
+        <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
+          Daily frequency
+        </Text>
+        <SimpleLineChart data={last30DaysData} height={180} color={habit.color} />
       </View>
 
       {/* Recent commits */}
