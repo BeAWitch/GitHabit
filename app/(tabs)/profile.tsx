@@ -9,14 +9,55 @@ import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { useMemo, useState } from "react";
 import { EditProfileModal } from "@/components/EditProfileModal";
-import { Link } from "expo-router";
 import { formatUnit } from "@/utils/unitFormatterUtil";
+
+const StatCard = ({
+  title,
+  value,
+  subtitle,
+  iconName,
+  iconColor,
+  fullWidth,
+}: {
+  title: string;
+  value: string | number;
+  subtitle: string;
+  iconName: keyof typeof Octicons.glyphMap;
+  iconColor: string;
+  fullWidth?: boolean;
+}) => (
+  <View
+    className={`${
+      fullWidth ? "w-full" : "w-[48%]"
+    } bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-4 rounded-md mb-4 flex-col`}
+  >
+    <View className="flex-row items-center mb-2">
+      <Octicons name={iconName} size={16} color={iconColor} className="mr-2" />
+      <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+        {title}
+      </Text>
+    </View>
+    <Text
+      className="text-2xl font-bold text-github-lightText dark:text-github-darkText mb-1"
+      numberOfLines={1}
+      adjustsFontSizeToFit
+    >
+      {value}
+    </Text>
+    <Text
+      className="text-xs text-github-lightMuted dark:text-github-darkMuted"
+      numberOfLines={1}
+    >
+      {subtitle}
+    </Text>
+  </View>
+);
 
 export default function Profile() {
   const { theme, setTheme } = useThemeStore();
   const { profile, updateProfile } = useUserStore();
   const { color } = useThemeColors();
-  const { habits, checkIns, fetchHabitDetail } = useHabitStore();
+  const { habits, checkIns } = useHabitStore();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   
   const {
@@ -37,8 +78,6 @@ export default function Profile() {
 
       dailyHabitSums[ci.dateString][ci.habitId] = (dailyHabitSums[ci.dateString][ci.habitId] || 0) + ci.value;
       if (ci.targetValue !== undefined) {
-         // Keep the latest target value for that day if multiple commits exist
-         // Alternatively, we could take the max. Let's take the max target value observed that day.
          dailyHabitTargets[ci.dateString][ci.habitId] = Math.max(
            dailyHabitTargets[ci.dateString][ci.habitId] || 0,
            ci.targetValue
@@ -57,8 +96,6 @@ export default function Profile() {
       let goalsMet = 0;
       for (const habitIdStr in sums) {
         const hId = parseInt(habitIdStr);
-        // Use the historically saved target for that day, or fallback to current target
-        // If the date is today, always use the current habit target
         const todayStr = new Date().toISOString().split('T')[0];
         let target = currentHabitTargets[hId] || 1;
         if (dateStr !== todayStr) {
@@ -78,11 +115,6 @@ export default function Profile() {
   const activeDays = useMemo(() => {
     return Object.entries(allGoalsMetPerDay).filter(([dateStr]) => dateStr.startsWith(selectedYear.toString())).length;
   }, [allGoalsMetPerDay, selectedYear]);
-
-  const pinnedHabits = useMemo(
-    () => habits.filter((habit) => (habit.pinned ?? 0) > 0),
-    [habits]
-  );
 
   // Compute a streak logic across all check-ins (at least one habit met its target)
   const currentStreak = useMemo(() => {
@@ -123,6 +155,82 @@ export default function Profile() {
     }
     return streak;
   }, [allGoalsMetPerDay]);
+
+  const yearlyStats = useMemo(() => {
+    // 1. Total Check-ins
+    const yearlyCheckIns = checkIns.filter((ci) => ci.dateString.startsWith(selectedYear.toString()));
+    const totalCheckIns = yearlyCheckIns.length;
+
+    // 2. Top Habit
+    const habitCounts: Record<number, number> = {};
+    yearlyCheckIns.forEach((ci) => {
+      habitCounts[ci.habitId] = (habitCounts[ci.habitId] || 0) + 1;
+    });
+    let topHabitId = -1;
+    let maxCount = 0;
+    for (const [id, count] of Object.entries(habitCounts)) {
+      if (count > maxCount) {
+        maxCount = count;
+        topHabitId = parseInt(id);
+      }
+    }
+    const topHabit = habits.find((h) => h.id === topHabitId);
+
+    // 3. Busiest Day
+    let busiestDateStr = "";
+    let maxGoals = 0;
+    for (const [dateStr, goals] of Object.entries(allGoalsMetPerDay)) {
+      if (dateStr.startsWith(selectedYear.toString()) && goals > maxGoals) {
+        maxGoals = goals;
+        busiestDateStr = dateStr;
+      }
+    }
+    let formattedBusiestDay = "None";
+    if (busiestDateStr) {
+      const [y, m, d] = busiestDateStr.split("-");
+      const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      formattedBusiestDay = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    }
+
+    // 4. Longest Streak
+    let currentYearStreak = 0;
+    let maxYearStreak = 0;
+    const startDate = new Date(selectedYear, 0, 1);
+    const isCurrentYear = selectedYear === new Date().getFullYear();
+    const endDate = isCurrentYear ? new Date() : new Date(selectedYear, 11, 31);
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      const dStr = [
+        d.getFullYear(),
+        String(d.getMonth() + 1).padStart(2, "0"),
+        String(d.getDate()).padStart(2, "0"),
+      ].join("-");
+      if ((allGoalsMetPerDay[dStr] || 0) > 0) {
+        currentYearStreak++;
+        maxYearStreak = Math.max(maxYearStreak, currentYearStreak);
+      } else {
+        currentYearStreak = 0;
+      }
+    }
+
+    // 5. Active Days & Completion Rate
+    const daysPassed = isCurrentYear
+      ? Math.floor((new Date().getTime() - new Date(selectedYear, 0, 1).getTime()) / (1000 * 60 * 60 * 24)) + 1
+      : (selectedYear % 4 === 0 && selectedYear % 100 > 0) || selectedYear % 400 === 0
+      ? 366
+      : 365;
+
+    const completionRate = daysPassed > 0 ? Math.round((activeDays / daysPassed) * 100) : 0;
+
+    return {
+      totalCheckIns,
+      topHabit: topHabit ? { name: topHabit.name, color: topHabit.color, count: maxCount } : null,
+      busiestDay: { date: formattedBusiestDay, count: maxGoals },
+      maxStreak: maxYearStreak,
+      completionRate,
+      daysPassed,
+    };
+  }, [checkIns, habits, allGoalsMetPerDay, selectedYear, activeDays]);
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
@@ -223,68 +331,59 @@ export default function Profile() {
         />
       </View>
 
-      {/* Pinned Habits Section (formerly Organizations) */}
-      <View>
+      {/* Statistics Section */}
+      <View className="mb-6">
         <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Pinned
+          Statistics ({selectedYear})
         </Text>
-        {pinnedHabits.length === 0 ? (
-          <View className="border border-github-lightBorder dark:border-github-darkBorder rounded-md p-4 mb-4 items-center">
-            <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted">
-              You don&apos;t have any pinned habits yet.
-            </Text>
-          </View>
-        ) : (
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            {pinnedHabits.map((habit) => (
-              <View
-                key={habit.id}
-                className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between"
-              >
-                <View>
-                  <View className="flex-row items-center mb-1">
-                    <Octicons
-                      name="repo"
-                      size={16}
-                      color={color.text}
-                      className="mr-2"
-                    />
-                    <Link
-                      href={`/habit/${habit.id}`}
-                      asChild
-                      onPress={() => fetchHabitDetail(habit.id)}
-                    >
-                      <TouchableOpacity className="flex-1">
-                        <Text
-                          className="text-github-lightText dark:text-github-darkText font-semibold text-sm"
-                          numberOfLines={1}
-                          style={{ color: color.link }}
-                        >
-                          {habit.name}
-                        </Text>
-                      </TouchableOpacity>
-                    </Link>
-                  </View>
-                  <Text
-                    className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-2 h-8"
-                    numberOfLines={2}
-                  >
-                    {habit.description || "No description"}
-                  </Text>
-                </View>
-                <View className="flex-row items-center mt-1">
-                  <View 
-                    className="w-3 h-3 rounded-full mr-1.5" 
-                    style={{ backgroundColor: habit.color || color.primary }} 
-                  />
-                  <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-                    {habit.categoryName || 'General'}
-                  </Text>
-                </View>
-              </View>
-            ))}
-          </View>
-        )}
+        
+        <View className="flex-row flex-wrap justify-between">
+          {/* Full Width: Total Check-ins */}
+          <StatCard
+            fullWidth
+            title="Total Commits"
+            value={yearlyStats.totalCheckIns.toString()}
+            subtitle={`${yearlyStats.totalCheckIns} ${formatUnit(yearlyStats.totalCheckIns, "commit")} in ${selectedYear}`}
+            iconName="git-commit"
+            iconColor={color.text}
+          />
+          
+          {/* Half Width: Longest Streak */}
+          <StatCard
+            title="Longest Streak"
+            value={`${yearlyStats.maxStreak} ${formatUnit(yearlyStats.maxStreak, "day")}`}
+            subtitle="Personal best"
+            iconName="flame"
+            iconColor="#e34c26"
+          />
+
+          {/* Half Width: Busiest Day */}
+          <StatCard
+            title="Busiest Day"
+            value={yearlyStats.busiestDay.date}
+            subtitle={yearlyStats.busiestDay.count > 0 ? `${yearlyStats.busiestDay.count} ${formatUnit(yearlyStats.busiestDay.count, "goal")} met` : 'No activity'}
+            iconName="calendar"
+            iconColor={color.text}
+          />
+
+          {/* Half Width: Top Habit */}
+          <StatCard
+            title="Top Habit"
+            value={yearlyStats.topHabit ? yearlyStats.topHabit.name : "None"}
+            subtitle={yearlyStats.topHabit ? `${yearlyStats.topHabit.count} ${formatUnit(yearlyStats.topHabit.count, "commit")}` : "No data"}
+            iconName="repo"
+            iconColor={yearlyStats.topHabit ? (yearlyStats.topHabit.color || color.primary) : color.muted}
+          />
+
+          {/* Half Width: Active Days / Completion Rate */}
+          <StatCard
+            title="Active Days"
+            value={`${activeDays} ${formatUnit(activeDays, "day")}`}
+            subtitle={`${yearlyStats.completionRate}% of ${yearlyStats.daysPassed} days`}
+            iconName="check-circle"
+            iconColor={color.primary}
+          />
+        </View>
       </View>
 
       <View className="h-10" />
