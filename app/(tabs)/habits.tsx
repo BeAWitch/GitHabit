@@ -13,6 +13,7 @@ import { Octicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
 
 import { HabitFormModal } from "@/components/HabitFormModal";
+import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateUtil";
@@ -31,7 +32,7 @@ const SORT_OPTIONS = [
 
 export default function Habits() {
   const { color } = useThemeColors();
-  const { habits, habitStats, categories, fetchData, fetchHabitDetail, updateHabit } =
+  const { habits, habitStats, categories, checkIns, fetchData, fetchHabitDetail, updateHabit } =
     useHabitStore();
 
   const [isModalVisible, setModalVisible] = useState(false);
@@ -58,9 +59,19 @@ export default function Habits() {
     width: number;
     height: number;
   } | null>(null);
+
   const typeButtonRef = useRef<View>(null);
   const sortButtonRef = useRef<View>(null);
   const categoryButtonRef = useRef<View>(null);
+
+  const todayStr = useMemo(() => {
+    const today = new Date();
+    return [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+  }, []);
 
   useEffect(() => {
     fetchData();
@@ -261,32 +272,64 @@ export default function Habits() {
           filteredHabits.map((habit) => {
             const stats = habitStats[habit.id];
             const lastUpdated = stats?.lastTimestamp ?? null;
+            
+            const todayValue = checkIns
+              .filter((c) => c.habitId === habit.id && c.dateString === todayStr)
+              .reduce((acc, curr) => acc + curr.value, 0);
+
             return (
               <View
                 key={habit.id}
-                className="border-b border-github-lightBorder dark:border-github-darkBorder py-4"
+                className="border-b border-github-lightBorder dark:border-github-darkBorder py-4 flex-row items-center justify-between"
               >
-                <View className="flex-row items-center justify-between mb-2">
-                  <Link
-                    href={`/habit/${habit.id}`}
-                    asChild
-                    onPress={() => fetchHabitDetail(habit.id)}
-                  >
-                    <TouchableOpacity className="flex-row items-center">
-                      <Text
-                        className="text-lg font-semibold"
-                        style={{ color: color.link }}
-                      >
-                        {habit.name}
-                      </Text>
-                      {habit.pinned === 1 && (
-                        <View className="ml-2">
-                          <Octicons name="pin" size={14} color={color.muted} />
-                        </View>
-                      )}
-                    </TouchableOpacity>
-                  </Link>
+                <View className="flex-1 mr-4">
+                  <View className="flex-row items-center justify-between mb-2">
+                    <Link
+                      href={`/habit/${habit.id}`}
+                      asChild
+                      onPress={() => fetchHabitDetail(habit.id)}
+                    >
+                      <TouchableOpacity className="flex-row items-center">
+                        <Text
+                          className="text-lg font-semibold"
+                          style={{ color: color.link }}
+                        >
+                          {habit.name}
+                        </Text>
+                        {habit.pinned === 1 && (
+                          <View className="ml-2">
+                            <Octicons name="pin" size={14} color={color.muted} />
+                          </View>
+                        )}
+                      </TouchableOpacity>
+                    </Link>
+                  </View>
+                  <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-3">
+                    {habit.description || "No description"}
+                  </Text>
+                  <View className="flex-row items-center">
+                    <View
+                      className="w-3 h-3 rounded-full mr-2"
+                      style={{ backgroundColor: habit.color || color.primary }}
+                    />
+                    <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mr-4">
+                      {habit.categoryName || "Default"}
+                    </Text>
+                    <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+                      Updated {formatRelativeTime(lastUpdated)}
+                    </Text>
+                  </View>
+                </View>
+
+                <View className="flex-row items-center">
+                  <GoalProgressRing
+                    currentValue={todayValue}
+                    targetValue={habit.targetValue || 1}
+                    size={40}
+                    strokeWidth={5}
+                  />
                   <TouchableOpacity
+                    className="ml-3 p-2"
                     onPress={(e) => {
                       const { pageX, pageY } = e.nativeEvent;
                       setHabitMenuAnchor({
@@ -304,21 +347,6 @@ export default function Habits() {
                       color={color.muted}
                     />
                   </TouchableOpacity>
-                </View>
-                <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-3">
-                  {habit.description || "No description"}
-                </Text>
-                <View className="flex-row items-center">
-                  <View
-                    className="w-3 h-3 rounded-full mr-2"
-                    style={{ backgroundColor: habit.color || color.primary }}
-                  />
-                  <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mr-4">
-                    {habit.categoryName || "Default"}
-                  </Text>
-                  <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-                    Updated {formatRelativeTime(lastUpdated)}
-                  </Text>
                 </View>
               </View>
             );

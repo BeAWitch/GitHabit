@@ -20,6 +20,7 @@ import { CommitModal } from "@/components/CommitModal";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { HabitFormModal } from "@/components/HabitFormModal";
 import { SimpleLineChart } from "@/components/SimpleLineChart";
+import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime, getDaysInCurrentYear } from "@/utils/dateUtil";
@@ -154,7 +155,10 @@ export default function HabitDetail() {
     String(today.getDate()).padStart(2, "0"),
   ].join("-");
 
-  if (contributions[todayStr]) {
+  const todayValue = contributions[todayStr] || 0;
+  const targetValue = habit.targetValue || 1;
+
+  if (todayValue >= targetValue) {
     currentStreak++;
   }
 
@@ -170,7 +174,7 @@ export default function HabitDetail() {
       String(checkDate.getDate()).padStart(2, "0"),
     ].join("-");
 
-    if (contributions[checkStr]) {
+    if ((contributions[checkStr] || 0) >= targetValue) {
       currentStreak++;
       checkDate.setDate(checkDate.getDate() - 1);
     } else {
@@ -249,37 +253,55 @@ export default function HabitDetail() {
 
       {/* Header */}
       <View className="mb-4">
-        <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-          Habit
-        </Text>
-        <View className="flex-row items-center justify-between mt-1">
-          <Text className="text-2xl font-bold text-github-lightText dark:text-github-darkText flex-1 mr-2">
-            {habit.name}
-          </Text>
-          <TouchableOpacity
-            className="px-3 py-2 rounded-md flex-row items-center"
-            style={{ backgroundColor: color.primary }}
-            onPress={() => setIsCommitModalVisible(true)}
-          >
-            <Octicons name="git-commit" size={14} color="white" />
-            <Text className="text-white font-semibold ml-2">Commit</Text>
-          </TouchableOpacity>
-        </View>
-        <View className="flex-row items-center mt-2">
-          {habit.categoryName && (
-            <View className="px-2 py-0.5 rounded-full border border-github-lightBorder dark:border-github-darkBorder mr-2 flex-row items-center">
-              <View
-                className="w-2 h-2 rounded-full mr-1.5"
-                style={{ backgroundColor: habit.color || color.primary }}
-              />
-              <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-                {habit.categoryName}
+        <View className="flex-row items-start justify-between">
+          <View className="flex-1 mr-4">
+            <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+              Habit
+            </Text>
+            <View className="flex-row items-center mt-1 mb-2">
+              <Text className="text-2xl font-bold text-github-lightText dark:text-github-darkText flex-1">
+                {habit.name}
               </Text>
             </View>
-          )}
-          <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted flex-1">
-            {habit.description || "No description provided."}
-          </Text>
+            <View className="flex-col items-start">
+              {habit.categoryName && (
+                <View className="px-2 py-0.5 rounded-full border border-github-lightBorder dark:border-github-darkBorder flex-row items-center mb-2">
+                  <View
+                    className="w-2 h-2 rounded-full mr-1.5"
+                    style={{ backgroundColor: habit.color || color.primary }}
+                  />
+                  <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+                    {habit.categoryName}
+                  </Text>
+                </View>
+              )}
+              <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-1">
+                {habit.description || "No description provided."}
+              </Text>
+            </View>
+          </View>
+
+          <View className="items-center flex-col justify-between">
+            <View className="items-center mb-4">
+              <GoalProgressRing
+                currentValue={todayValue}
+                targetValue={habit.targetValue || 1}
+                size={40}
+              />
+              <Text className="text-[10px] text-github-lightMuted dark:text-github-darkMuted mt-1">
+                Today&apos;s Goal
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              className="px-3 py-2 rounded-md flex-row items-center"
+              style={{ backgroundColor: color.primary }}
+              onPress={() => setIsCommitModalVisible(true)}
+            >
+              <Octicons name="git-commit" size={14} color="white" />
+              <Text className="text-white font-semibold ml-2">Commit</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 

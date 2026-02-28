@@ -14,21 +14,67 @@ export default function Profile() {
   const { theme, setTheme } = useThemeStore();
   const { profile, updateProfile } = useUserStore();
   const { color } = useThemeColors();
-  const { globalContributions, habits, fetchHabitDetail } = useHabitStore();
+  const { globalContributions, habits, checkIns, fetchHabitDetail } = useHabitStore();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-  const totalContributions = useMemo(
-    () => Object.values(globalContributions).reduce((a, b) => a + b, 0),
-    [globalContributions]
-  );
+  const activeDays = useMemo(() => {
+    const dailyHabitSums: Record<string, Record<number, number>> = {};
+    checkIns.forEach(ci => {
+      if (!dailyHabitSums[ci.dateString]) dailyHabitSums[ci.dateString] = {};
+      dailyHabitSums[ci.dateString][ci.habitId] = (dailyHabitSums[ci.dateString][ci.habitId] || 0) + ci.value;
+    });
+
+    const habitTargets: Record<number, number> = {};
+    habits.forEach(h => {
+      habitTargets[h.id] = h.targetValue || 1;
+    });
+
+    let count = 0;
+    for (const dateStr in dailyHabitSums) {
+      const sums = dailyHabitSums[dateStr];
+      let didMeetGoal = false;
+      for (const habitIdStr in sums) {
+        const hId = parseInt(habitIdStr);
+        const target = habitTargets[hId] || 1;
+        if (sums[hId] >= target) {
+          didMeetGoal = true;
+          break;
+        }
+      }
+      if (didMeetGoal) count++;
+    }
+    return count;
+  }, [checkIns, habits]);
 
   const pinnedHabits = useMemo(
     () => habits.filter((habit) => (habit.pinned ?? 0) > 0),
     [habits]
   );
 
-  // Compute a simple streak logic across all check-ins
+  // Compute a streak logic across all check-ins (at least one habit met its target)
   const currentStreak = useMemo(() => {
+    const dailyHabitSums: Record<string, Record<number, number>> = {};
+    checkIns.forEach(ci => {
+      if (!dailyHabitSums[ci.dateString]) dailyHabitSums[ci.dateString] = {};
+      dailyHabitSums[ci.dateString][ci.habitId] = (dailyHabitSums[ci.dateString][ci.habitId] || 0) + ci.value;
+    });
+
+    const habitTargets: Record<number, number> = {};
+    habits.forEach(h => {
+      habitTargets[h.id] = h.targetValue || 1;
+    });
+
+    const didMeetAnyGoal = (dateStr: string) => {
+      const sums = dailyHabitSums[dateStr];
+      if (!sums) return false;
+      for (const habitIdStr in sums) {
+        const hId = parseInt(habitIdStr);
+        const target = habitTargets[hId] || 1;
+        if (sums[hId] >= target) return true;
+      }
+      return false;
+    };
+
     let streak = 0;
     const today = new Date();
     const todayStr = [
@@ -37,7 +83,7 @@ export default function Profile() {
       String(today.getDate()).padStart(2, "0"),
     ].join("-");
     
-    if (globalContributions[todayStr]) {
+    if (didMeetAnyGoal(todayStr)) {
       streak++;
     }
     
@@ -53,7 +99,7 @@ export default function Profile() {
         String(checkDate.getDate()).padStart(2, "0"),
       ].join("-");
       
-      if (globalContributions[checkStr]) {
+      if (didMeetAnyGoal(checkStr)) {
         streak++;
         checkDate.setDate(checkDate.getDate() - 1);
       } else {
@@ -61,7 +107,7 @@ export default function Profile() {
       }
     }
     return streak;
-  }, [globalContributions]);
+  }, [checkIns, habits]);
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
@@ -143,7 +189,7 @@ export default function Profile() {
       {/* Contribution Graph Section */}
       <View className="mb-6">
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          {totalContributions} contributions in the last year
+          {activeDays} days with goals met in the last year
         </Text>
         <ContributionGraph contributions={globalContributions} days={getDaysInCurrentYear()} />
       </View>

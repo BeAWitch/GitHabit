@@ -2,6 +2,7 @@ import { CommitModal } from "@/components/CommitModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateUtil";
+import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { formatUnit } from "@/utils/unitFormatterUtil";
 import { Octicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
@@ -35,48 +36,6 @@ function CheckInGroupRenderer({
   const habitExists = habits.some((h) => h.id === group.habitId);
   const total = group.activities.length;
 
-  if (total === 1) {
-    const activity = group.activities[0];
-    return (
-      <View key={group.id} className="flex-row items-start mb-4">
-        <View className="mt-1 mr-3">
-          <Octicons name="git-commit" size={16} color={color.success} />
-        </View>
-        <View
-          className={`flex-1 ${!isLast ? "border-b border-github-lightBorder dark:border-github-darkBorder pb-3" : ""}`}
-        >
-          <Text className="text-sm text-github-lightText dark:text-github-darkText">
-            <Text className="font-semibold">You</Text> committed{" "}
-            {activity.value} {formatUnit(activity.value || 1, activity.unitLabel || "time")} to{" "}
-            {habitExists ? (
-              <Link
-                href={`/habit/${activity.habitId}`}
-                asChild
-                onPress={() => fetchHabitDetail(activity.habitId)}
-              >
-                <Text className="font-semibold" style={{ color: color.link }}>
-                  {activity.habitName || `repo-${activity.habitId}`}
-                </Text>
-              </Link>
-            ) : (
-              <Text className="font-semibold" style={{ color: color.muted }}>
-                {activity.habitName || `repo-${activity.habitId}`}
-              </Text>
-            )}
-          </Text>
-          {activity.message && activity.message !== "Quick commit" && (
-            <Text className="text-xs text-github-lightText dark:text-github-darkText mt-1">
-              &quot;{activity.message}&quot;
-            </Text>
-          )}
-          <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mt-1">
-            {formatRelativeTime(activity.timestamp)}
-          </Text>
-        </View>
-      </View>
-    );
-  }
-
   const visibleActivities = expanded
     ? group.activities
     : group.activities.slice(0, 2);
@@ -85,7 +44,7 @@ function CheckInGroupRenderer({
   return (
     <View key={group.id} className="flex-row items-start mb-4">
       <View className="mt-1 mr-3">
-        <Octicons name="repo-push" size={16} color={color.text} />
+        <Octicons name="git-commit" size={16} color={color.primary} />
       </View>
       <View
         className={`flex-1 ${!isLast ? "border-b border-github-lightBorder dark:border-github-darkBorder pb-3" : ""}`}
@@ -240,52 +199,72 @@ export default function Home() {
           </View>
         ) : (
           <View className="flex-row flex-wrap justify-between gap-y-3">
-            {pinnedHabits.map((habit) => (
-              <View
-                key={habit.id}
-                className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between"
-              >
-                <View>
-                  <View className="flex-row items-center mb-1">
-                    <Octicons
-                      name="repo"
-                      size={16}
-                      color={color.text}
-                      className="mr-2"
-                    />
-                    <Link
-                      href={`/habit/${habit.id}`}
-                      asChild
-                      onPress={() => fetchHabitDetail(habit.id)}
-                    >
-                      <TouchableOpacity className="flex-1">
-                        <Text
-                          className="text-github-lightText dark:text-github-darkText font-semibold text-sm"
-                          numberOfLines={1}
-                        >
-                          {habit.name}
-                        </Text>
-                      </TouchableOpacity>
-                    </Link>
-                  </View>
-                  <Text
-                    className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-3 h-8"
-                    numberOfLines={2}
-                  >
-                    {habit.description || "No description"}
-                  </Text>
-                </View>
+            {pinnedHabits.map((habit) => {
+              // Calculate today's progress for pinned habits
+              const todayStr = new Date().toISOString().split("T")[0];
+              const habitId = habit.id;
+              
+              // We need habitContributions from store for calculating today's progress
+              const contributions = useHabitStore.getState().habitContributions[habitId] || {};
+              const todayCount = contributions[todayStr] || 0;
+              // Goal logic: use goalTarget if present, otherwise default to 1
+              const targetCount = (habit as any).goalTarget || 1;
 
-                {/* Quick Commit Button */}
-                <TouchableOpacity
-                  className="py-1 rounded-md items-center"
-                  style={{ backgroundColor: color.primary }}
-                  onPress={() => setCommitModalHabitId(habit.id)}
+              return (
+                <View
+                  key={habit.id}
+                  className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between relative"
                 >
-                  <Text className="text-white text-xs font-bold">Commit</Text>
-                </TouchableOpacity>
-              </View>
-            ))}
+                  <View className="absolute top-3 right-4 z-10">
+                    <GoalProgressRing
+                      currentValue={todayCount}
+                      targetValue={targetCount}
+                      size={30}
+                      strokeWidth={3}
+                    />
+                  </View>
+                  <View>
+                    <View className="flex-row items-center mb-1 pr-6">
+                      <Octicons
+                        name="repo"
+                        size={16}
+                        color={color.text}
+                        className="mr-2"
+                      />
+                      <Link
+                        href={`/habit/${habit.id}`}
+                        asChild
+                        onPress={() => fetchHabitDetail(habit.id)}
+                      >
+                        <TouchableOpacity className="flex-1">
+                          <Text
+                            className="text-github-lightText dark:text-github-darkText font-semibold text-sm"
+                            numberOfLines={1}
+                          >
+                            {habit.name}
+                          </Text>
+                        </TouchableOpacity>
+                      </Link>
+                    </View>
+                    <Text
+                      className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-3 h-8"
+                      numberOfLines={2}
+                    >
+                      {habit.description || "No description"}
+                    </Text>
+                  </View>
+  
+                  {/* Quick Commit Button */}
+                  <TouchableOpacity
+                    className="py-1 rounded-md items-center"
+                    style={{ backgroundColor: color.primary }}
+                    onPress={() => setCommitModalHabitId(habit.id)}
+                  >
+                    <Text className="text-white text-xs font-bold">Commit</Text>
+                  </TouchableOpacity>
+                </View>
+              );
+            })}
           </View>
         )}
       </View>
