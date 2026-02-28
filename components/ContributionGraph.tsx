@@ -1,6 +1,7 @@
 import React, { useMemo, useRef } from 'react';
 import { View, ScrollView, Text } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { getDaysInCurrentYear } from '@/utils/dateUtil';
 
 interface ContributionGraphProps {
   contributions: Record<string, number>;
@@ -9,13 +10,13 @@ interface ContributionGraphProps {
 
 export const ContributionGraph: React.FC<ContributionGraphProps> = ({ 
   contributions, 
-  days = 365 
+  days = getDaysInCurrentYear()
 }) => {
   const { color } = useThemeColors();
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Generate heatmap data grouped by columns (weeks)
-  const { columns, maxCount } = useMemo(() => {
+  const { columns, months, maxCount } = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     
@@ -54,11 +55,38 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
 
     // Group by 7
     const cols = [];
+    const months = [];
+    
     for (let i = 0; i < allDays.length; i += 7) {
-      cols.push(allDays.slice(i, i + 7));
+      const colDays = allDays.slice(i, i + 7);
+      cols.push(colDays);
+      
+      // Check for month transitions
+      // Find the first valid day in this column to see if a new month started
+      // Or more specifically, look at the last day (Saturday) of the column to decide its month.
+      // GitHub usually places the month label over the column that contains the first day of that month.
+      const firstValidDay = colDays.find(d => d.count !== -1);
+      if (firstValidDay) {
+        const d = new Date(firstValidDay.dateString);
+        const monthIndex = d.getMonth();
+        // Force English month abbreviations
+        const monthName = d.toLocaleString('en-US', { month: 'short' });
+        
+        // If it's the first column
+        if (cols.length === 1) {
+          months.push({ name: monthName, colIndex: cols.length - 1 });
+        } else {
+          // Check if this column contains the 1st of the month
+          const containsFirstDay = colDays.some(d => d.count !== -1 && new Date(d.dateString).getDate() === 1);
+          
+          if (containsFirstDay) {
+             months.push({ name: monthName, colIndex: cols.length - 1 });
+          }
+        }
+      }
     }
     
-    return { columns: cols, maxCount: currentMax };
+    return { columns: cols, months, maxCount: currentMax };
   }, [contributions, days]);
 
   return (
@@ -70,9 +98,28 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
         ref={scrollViewRef}
         onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: false })}
       >
-        <View className="flex-row">
-          {columns.map((col, colIdx) => (
-            <View key={colIdx} className="flex-col mr-1">
+        <View className="flex-col">
+          {/* Month labels row */}
+          <View className="flex-row h-4 mb-1 relative">
+            {months.map((month, i) => {
+              // Calculate left position based on column index (16px per column: 12px width + 4px margin)
+              // We'll use absolute positioning so they don't affect column layout and don't get squished
+              return (
+                <Text 
+                  key={`${month.name}-${i}`}
+                  className="absolute text-[10px] text-github-lightMuted dark:text-github-darkMuted"
+                  style={{ left: month.colIndex * 16 }}
+                >
+                  {month.name}
+                </Text>
+              );
+            })}
+          </View>
+          
+          {/* Heatmap grid */}
+          <View className="flex-row">
+            {columns.map((col, colIdx) => (
+              <View key={colIdx} className="flex-col mr-1">
               {col.map((day, rowIdx) => {
                 if (day.count === -1) {
                   return <View key={`empty-${rowIdx}`} className="w-3 h-3 mb-1 bg-transparent" />; // Empty slot
@@ -110,7 +157,8 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                 );
               })}
             </View>
-          ))}
+            ))}
+          </View>
         </View>
       </ScrollView>
       <View className="flex-row justify-between items-center mt-2">

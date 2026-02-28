@@ -10,18 +10,18 @@ import {
   View,
 } from "react-native";
 
+import { Octicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Markdown from "react-native-markdown-display";
-import { Octicons } from "@expo/vector-icons";
 
-import { useThemeColors } from "@/hooks/useThemeColors";
-import { useHabitStore } from "@/store/habitStore";
-import { formatRelativeTime } from "@/utils/dateFormatter";
-import { getMarkdownStyle } from "@/utils/markdownStyle";
+import { CommitModal } from "@/components/CommitModal";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { HabitFormModal } from "@/components/HabitFormModal";
-import { CommitModal } from "@/components/CommitModal";
 import { SimpleLineChart } from "@/components/SimpleLineChart";
+import { useThemeColors } from "@/hooks/useThemeColors";
+import { useHabitStore } from "@/store/habitStore";
+import { formatRelativeTime, getDaysInCurrentYear } from "@/utils/dateUtil";
+import { getMarkdownStyle } from "@/utils/markdownStyle";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
@@ -30,8 +30,15 @@ export default function HabitDetail() {
 
   const habitId = Number(id);
 
-  const { habits, checkIns, habitStats, habitContributions, fetchHabitDetail, commitCheckIn, removeHabit } =
-    useHabitStore();
+  const {
+    habits,
+    checkIns,
+    habitStats,
+    habitContributions,
+    fetchHabitDetail,
+    commitCheckIn,
+    removeHabit,
+  } = useHabitStore();
 
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [readmeHeight, setReadmeHeight] = useState(240);
@@ -47,7 +54,10 @@ export default function HabitDetail() {
 
   const habit = habits.find((h) => h.id === habitId);
   const stats = habitStats[habitId] || { total: 0, lastTimestamp: null };
-  const contributions = useMemo(() => habitContributions[habitId] || {}, [habitContributions, habitId]);
+  const contributions = useMemo(
+    () => habitContributions[habitId] || {},
+    [habitContributions, habitId],
+  );
 
   const screenHeight = Dimensions.get("window").height;
   const minReadmeHeight = 160;
@@ -66,7 +76,7 @@ export default function HabitDetail() {
         const nextHeight = clampHeight(readmeStartHeight.current + gesture.dy);
         setReadmeHeight(nextHeight);
       },
-    })
+    }),
   ).current;
 
   const markdownStyle = useMemo(() => getMarkdownStyle(color), [color]);
@@ -92,8 +102,9 @@ export default function HabitDetail() {
   }, [contributions]);
 
   // Filter and sort recent check-ins
-  const recentCheckIns = checkIns
-    .filter((c) => c.habitId === habitId)
+  const habitCheckIns = checkIns.filter((c) => c.habitId === habitId);
+  const totalCommits = habitCheckIns.length;
+  const recentCheckIns = habitCheckIns
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 10); // Show top 10 recent
 
@@ -123,23 +134,23 @@ export default function HabitDetail() {
     String(today.getMonth() + 1).padStart(2, "0"),
     String(today.getDate()).padStart(2, "0"),
   ].join("-");
-  
+
   if (contributions[todayStr]) {
     currentStreak++;
   }
-  
+
   // Starting yesterday, check consecutive days
   const yesterday = new Date(today);
   yesterday.setDate(today.getDate() - 1);
   let checkDate = yesterday;
-  
+
   while (true) {
     const checkStr = [
       checkDate.getFullYear(),
       String(checkDate.getMonth() + 1).padStart(2, "0"),
       String(checkDate.getDate()).padStart(2, "0"),
     ].join("-");
-    
+
     if (contributions[checkStr]) {
       currentStreak++;
       checkDate.setDate(checkDate.getDate() - 1);
@@ -154,15 +165,15 @@ export default function HabitDetail() {
       `Are you sure you want to delete ${habit.name}? This will also delete all commit history. This action cannot be undone.`,
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
+        {
+          text: "Delete",
           style: "destructive",
           onPress: () => {
             removeHabit(habitId);
             router.back();
-          }
-        }
-      ]
+          },
+        },
+      ],
     );
   };
 
@@ -180,7 +191,10 @@ export default function HabitDetail() {
           </Text>
         </TouchableOpacity>
         <View className="flex-row items-center mt-4 space-x-4">
-          <TouchableOpacity onPress={() => setIsEditModalVisible(true)} className="mr-3">
+          <TouchableOpacity
+            onPress={() => setIsEditModalVisible(true)}
+            className="mr-3"
+          >
             <Octicons name="pencil" size={18} color={color.muted} />
           </TouchableOpacity>
           <TouchableOpacity onPress={handleDelete}>
@@ -209,9 +223,7 @@ export default function HabitDetail() {
         </View>
         <View className="flex-row items-center mt-2">
           {habit.categoryName && (
-            <View
-              className="px-2 py-0.5 rounded-full border border-github-lightBorder dark:border-github-darkBorder mr-2 flex-row items-center"
-            >
+            <View className="px-2 py-0.5 rounded-full border border-github-lightBorder dark:border-github-darkBorder mr-2 flex-row items-center">
               <View
                 className="w-2 h-2 rounded-full mr-1.5"
                 style={{ backgroundColor: habit.color || color.primary }}
@@ -264,7 +276,7 @@ export default function HabitDetail() {
       <View className="flex-row items-center mb-6">
         <View className="mr-6">
           <Text className="text-base font-bold text-github-lightText dark:text-github-darkText">
-            {stats.total}
+            {totalCommits}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
             commits
@@ -293,7 +305,7 @@ export default function HabitDetail() {
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
           Contribution activity
         </Text>
-        <ContributionGraph contributions={contributions} days={84} />
+        <ContributionGraph contributions={contributions} days={getDaysInCurrentYear()} />
       </View>
 
       {/* Daily changes chart */}
@@ -301,7 +313,11 @@ export default function HabitDetail() {
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
           Daily frequency
         </Text>
-        <SimpleLineChart data={last30DaysData} height={180} color={habit.color} />
+        <SimpleLineChart
+          data={last30DaysData}
+          height={180}
+          color={habit.color}
+        />
       </View>
 
       {/* Recent commits */}
@@ -342,10 +358,10 @@ export default function HabitDetail() {
           )}
         </View>
       </View>
-      
+
       {/* Spacer to allow scrolling past the bottom */}
       <View className="h-10" />
-      
+
       <HabitFormModal
         visible={isEditModalVisible}
         onClose={() => setIsEditModalVisible(false)}

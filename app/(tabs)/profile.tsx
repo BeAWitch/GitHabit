@@ -4,6 +4,7 @@ import { useHabitStore } from "@/store/habitStore";
 import { Octicons } from "@expo/vector-icons";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { ContributionGraph } from "@/components/ContributionGraph";
+import { getDaysInCurrentYear } from "@/utils/dateUtil";
 
 export default function Profile() {
   const { theme, setTheme } = useThemeStore();
@@ -120,7 +121,7 @@ export default function Profile() {
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
           {totalContributions} contributions in the last year
         </Text>
-        <ContributionGraph contributions={globalContributions} days={365} />
+        <ContributionGraph contributions={globalContributions} days={getDaysInCurrentYear()} />
       </View>
 
       {/* Organizations / Pinned Placeholder */}

@@ -14,3 +14,12 @@ export const formatRelativeTime = (timestamp: number | null): string => {
   if (days === 1) return "Yesterday";
   return `${days} days ago`;
 };
+
+export const getDaysInCurrentYear = (): number => {
+    const now = new Date();
+    const year = now.getFullYear();
+
+    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
+
+    return isLeapYear ? 366 : 365;
+}
