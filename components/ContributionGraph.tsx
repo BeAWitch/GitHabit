@@ -6,11 +6,13 @@ import { getDaysInCurrentYear } from '@/utils/dateUtil';
 interface ContributionGraphProps {
   contributions: Record<string, number>;
   days?: number;
+  targetValue?: number;
 }
 
 export const ContributionGraph: React.FC<ContributionGraphProps> = ({ 
   contributions, 
-  days = getDaysInCurrentYear()
+  days = getDaysInCurrentYear(),
+  targetValue
 }) => {
   const { color } = useThemeColors();
   const scrollViewRef = useRef<ScrollView>(null);
@@ -127,23 +129,36 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                 
                 const levels = color.heatmap;
                 let levelIndex = 0;
+                let isTargetMet = false;
                 
                 if (day.count > 0) {
-                  if (maxCount <= 4) {
-                    // If max count is very low, just map directly to levels (1->1, 2->2, etc.)
-                    levelIndex = Math.min(4, day.count);
-                  } else {
-                    // Dynamic scaling for higher counts. Level 1 is always > 0.
-                    // The remaining range (maxCount - 1) is divided into 3 buckets (levels 2, 3, 4)
-                    const percentile = (day.count - 1) / (maxCount - 1);
-                    if (percentile === 0) {
-                      levelIndex = 1;
-                    } else if (percentile <= 0.33) {
-                      levelIndex = 2;
-                    } else if (percentile <= 0.66) {
-                      levelIndex = 3;
-                    } else {
+                  if (targetValue && targetValue > 0) {
+                    if (day.count >= targetValue) {
                       levelIndex = 4;
+                      isTargetMet = true;
+                    } else {
+                      const percentile = day.count / targetValue;
+                      if (percentile <= 0.33) levelIndex = 1;
+                      else if (percentile <= 0.66) levelIndex = 2;
+                      else levelIndex = 3;
+                    }
+                  } else {
+                    if (maxCount <= 4) {
+                      // If max count is very low, just map directly to levels (1->1, 2->2, etc.)
+                      levelIndex = Math.min(4, day.count);
+                    } else {
+                      // Dynamic scaling for higher counts. Level 1 is always > 0.
+                      // The remaining range (maxCount - 1) is divided into 3 buckets (levels 2, 3, 4)
+                      const percentile = (day.count - 1) / (maxCount - 1);
+                      if (percentile === 0) {
+                        levelIndex = 1;
+                      } else if (percentile <= 0.33) {
+                        levelIndex = 2;
+                      } else if (percentile <= 0.66) {
+                        levelIndex = 3;
+                      } else {
+                        levelIndex = 4;
+                      }
                     }
                   }
                 }
@@ -151,9 +166,15 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                 return (
                   <View
                     key={day.dateString}
-                    className="w-3 h-3 rounded-[2px] mb-1"
+                    className="w-3 h-3 rounded-[2px] mb-1 items-center justify-center overflow-hidden"
                     style={{ backgroundColor: levels[levelIndex] }}
-                  />
+                  >
+                    {isTargetMet && (
+                      <Text style={{ fontSize: 8, color: '#ffffff', fontWeight: 'bold', lineHeight: 10, textAlign: 'center' }}>
+                        ✓
+                      </Text>
+                    )}
+                  </View>
                 );
               })}
             </View>

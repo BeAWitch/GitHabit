@@ -15,6 +15,7 @@ export const initDB = () => {
         plan TEXT,
         unitType TEXT DEFAULT 'binary',
         unitLabel TEXT DEFAULT 'done',
+        targetValue INTEGER DEFAULT 1,
         color TEXT DEFAULT 'ghGreen',
         createdAt INTEGER NOT NULL,
         status TEXT DEFAULT 'active',
@@ -55,6 +56,15 @@ export const initDB = () => {
       const message = error instanceof Error ? error.message : String(error);
       if (!message.includes('duplicate column name')) {
         console.error('Failed to migrate habits.pinned:', error);
+      }
+    }
+
+    try {
+      db.execSync('ALTER TABLE habits ADD COLUMN targetValue INTEGER DEFAULT 1;');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('duplicate column name')) {
+        console.error('Failed to migrate habits.targetValue:', error);
       }
     }
 

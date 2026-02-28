@@ -37,6 +37,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [plan, setPlan] = useState("");
   const [unitType, setUnitType] = useState<"count" | "binary">("count");
   const [unitLabel, setUnitLabel] = useState("");
+  const [targetValue, setTargetValue] = useState("1");
   const [selectedCategoryId, setSelectedCategoryId] = useState<number | null>(null);
   const [status, setStatus] = useState<"active" | "archived">("active");
   const [pinned, setPinned] = useState(false);
@@ -56,6 +57,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
           setPlan(habit.plan || "");
           setUnitType(habit.unitType || "count");
           setUnitLabel(habit.unitLabel || "");
+          setTargetValue(String(habit.targetValue ?? 1));
           setSelectedCategoryId(habit.categoryId);
           setStatus(habit.status || "active");
           setPinned(Boolean(habit.pinned));
@@ -66,6 +68,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         setPlan("");
         setUnitType("count");
         setUnitLabel("");
+        setTargetValue("1");
         setStatus("active");
         setPinned(false);
         if (categories.length > 0) {
@@ -102,6 +105,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
     if (!name.trim() || selectedCategoryId === null) return;
 
     const finalUnitLabel = unitLabel.trim() || (unitType === "count" ? "times" : "done");
+    const parsedTarget = Math.max(1, parseInt(targetValue, 10) || 1);
 
     if (habitId) {
       updateHabit(
@@ -111,6 +115,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         plan.trim(),
         unitType,
         finalUnitLabel,
+        parsedTarget,
         selectedCategoryId,
         status,
         pinned ? 1 : 0
@@ -122,6 +127,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         plan.trim(),
         unitType,
         finalUnitLabel,
+        parsedTarget,
         selectedCategoryId,
         status,
         pinned ? 1 : 0
@@ -274,6 +280,20 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                   onChangeText={setUnitLabel}
                 />
               </View>
+            </View>
+
+            <View className="mb-4">
+              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
+                Daily Target <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">(Goal per day)</Text>
+              </Text>
+              <TextInput
+                className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
+                placeholder="1"
+                placeholderTextColor={color.muted}
+                value={targetValue}
+                onChangeText={(text) => setTargetValue(text.replace(/[^0-9]/g, ''))}
+                keyboardType="numeric"
+              />
             </View>
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">

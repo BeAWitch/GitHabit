@@ -1,78 +1,99 @@
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useThemeStore } from "@/store/themeStore";
 import { useHabitStore } from "@/store/habitStore";
+import { useUserStore } from "@/store/userStore";
 import { Octicons } from "@expo/vector-icons";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { ContributionGraph } from "@/components/ContributionGraph";
 import { getDaysInCurrentYear } from "@/utils/dateUtil";
+import { useMemo, useState } from "react";
+import { EditProfileModal } from "@/components/EditProfileModal";
+import { Link } from "expo-router";
 
 export default function Profile() {
   const { theme, setTheme } = useThemeStore();
+  const { profile, updateProfile } = useUserStore();
   const { color } = useThemeColors();
-  const { globalContributions, habits } = useHabitStore();
+  const { globalContributions, habits, fetchHabitDetail } = useHabitStore();
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-  const totalContributions = Object.values(globalContributions).reduce((a, b) => a + b, 0);
+  const totalContributions = useMemo(
+    () => Object.values(globalContributions).reduce((a, b) => a + b, 0),
+    [globalContributions]
+  );
+
+  const pinnedHabits = useMemo(
+    () => habits.filter((habit) => (habit.pinned ?? 0) > 0),
+    [habits]
+  );
 
   // Compute a simple streak logic across all check-ins
-  let currentStreak = 0;
-  const today = new Date();
-  const todayStr = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
-  
-  if (globalContributions[todayStr]) {
-    currentStreak++;
-  }
-  
-  // Starting yesterday, check consecutive days
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  let checkDate = yesterday;
-  
-  while (true) {
-    const checkStr = [
-      checkDate.getFullYear(),
-      String(checkDate.getMonth() + 1).padStart(2, "0"),
-      String(checkDate.getDate()).padStart(2, "0"),
+  const currentStreak = useMemo(() => {
+    let streak = 0;
+    const today = new Date();
+    const todayStr = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
     ].join("-");
     
-    if (globalContributions[checkStr]) {
-      currentStreak++;
-      checkDate.setDate(checkDate.getDate() - 1);
-    } else {
-      break;
+    if (globalContributions[todayStr]) {
+      streak++;
     }
-  }
+    
+    // Starting yesterday, check consecutive days
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    let checkDate = yesterday;
+    
+    while (true) {
+      const checkStr = [
+        checkDate.getFullYear(),
+        String(checkDate.getMonth() + 1).padStart(2, "0"),
+        String(checkDate.getDate()).padStart(2, "0"),
+      ].join("-");
+      
+      if (globalContributions[checkStr]) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [globalContributions]);
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
       {/* Profile Header */}
       <View className="flex-row items-center mb-6 mt-4">
         <Image
-          source={{ uri: "https://avatars.githubusercontent.com/u/1?v=4" }} // Placeholder octocat
+          source={profile.avatarUri ? { uri: profile.avatarUri } : require('@/assets/images/default-user-icon.png')}
           className="w-16 h-16 rounded-full border border-github-lightBorder dark:border-github-darkBorder mr-4"
         />
         <View className="flex-1">
-          <Text className="text-xl font-bold text-github-lightText dark:text-github-darkText">
-            Developer
+          <Text className="text-xl font-bold text-github-lightText dark:text-github-darkText mb-1">
+            {profile.username}
           </Text>
-          <Text className="text-base text-github-lightMuted dark:text-github-darkMuted mb-1">
-            super-coder
-          </Text>
+          {profile.bio ? (
+             <Text className="text-sm text-github-lightText dark:text-github-darkText mb-1">
+               {profile.bio}
+             </Text>
+          ) : null}
           {/* Status Placeholder */}
-          <View className="flex-row items-center">
-            <Octicons
-              name="smiley"
-              size={14}
-              color={color.muted}
-              className="mr-1"
-            />
-            <Text className="text-xs text-github-lightText dark:text-github-darkText">
-              Building habits...
-            </Text>
-          </View>
+          {profile.status ? (
+            <View className="flex-row items-center">
+              <Octicons
+                name="smiley"
+                size={14}
+                color={color.muted}
+                className="mr-1"
+              />
+              <Text className="text-xs text-github-lightText dark:text-github-darkText">
+                {profile.status}
+              </Text>
+            </View>
+          ) : null}
         </View>
       </View>
 
@@ -98,7 +119,10 @@ export default function Profile() {
 
       {/* Edit Profile / Settings Buttons */}
       <View className="flex-row space-x-3 mb-6">
-        <TouchableOpacity className="flex-1 bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder py-2 rounded-md items-center mr-2">
+        <TouchableOpacity 
+          className="flex-1 bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder py-2 rounded-md items-center mr-2"
+          onPress={() => setIsEditModalVisible(true)}
+        >
           <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
             Edit profile
           </Text>
@@ -109,7 +133,7 @@ export default function Profile() {
           onPress={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
           <Octicons
-            name={theme === "dark" ? "sun" : "moon"}
+            name={theme === "dark" ? "moon" : "sun"}
             size={16}
             color={color.text}
           />
@@ -124,18 +148,79 @@ export default function Profile() {
         <ContributionGraph contributions={globalContributions} days={getDaysInCurrentYear()} />
       </View>
 
-      {/* Organizations / Pinned Placeholder */}
+      {/* Pinned Habits Section (formerly Organizations) */}
       <View>
-        <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Organizations
+        <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
+          Pinned
         </Text>
-        <View className="flex-row">
-          <View className="w-8 h-8 rounded-md bg-purple-500 mr-2" />
-          <View className="w-8 h-8 rounded-md bg-blue-500 mr-2" />
-          <View className="w-8 h-8 rounded-md bg-green-500" />
-        </View>
+        {pinnedHabits.length === 0 ? (
+          <View className="border border-github-lightBorder dark:border-github-darkBorder rounded-md p-4 mb-4 items-center">
+            <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted">
+              You don&apos;t have any pinned habits yet.
+            </Text>
+          </View>
+        ) : (
+          <View className="flex-row flex-wrap justify-between gap-y-3">
+            {pinnedHabits.map((habit) => (
+              <View
+                key={habit.id}
+                className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between"
+              >
+                <View>
+                  <View className="flex-row items-center mb-1">
+                    <Octicons
+                      name="repo"
+                      size={16}
+                      color={color.text}
+                      className="mr-2"
+                    />
+                    <Link
+                      href={`/habit/${habit.id}`}
+                      asChild
+                      onPress={() => fetchHabitDetail(habit.id)}
+                    >
+                      <TouchableOpacity className="flex-1">
+                        <Text
+                          className="text-github-lightText dark:text-github-darkText font-semibold text-sm"
+                          numberOfLines={1}
+                          style={{ color: color.link }}
+                        >
+                          {habit.name}
+                        </Text>
+                      </TouchableOpacity>
+                    </Link>
+                  </View>
+                  <Text
+                    className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-2 h-8"
+                    numberOfLines={2}
+                  >
+                    {habit.description || "No description"}
+                  </Text>
+                </View>
+                <View className="flex-row items-center mt-1">
+                  <View 
+                    className="w-3 h-3 rounded-full mr-1.5" 
+                    style={{ backgroundColor: habit.color || color.primary }} 
+                  />
+                  <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+                    {habit.categoryName || 'General'}
+                  </Text>
+                </View>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
+
       <View className="h-10" />
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        visible={isEditModalVisible}
+        initialProfile={profile}
+        onClose={() => setIsEditModalVisible(false)}
+        onSubmit={updateProfile}
+      />
     </ScrollView>
   );
 }

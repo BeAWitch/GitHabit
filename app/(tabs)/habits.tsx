@@ -423,6 +423,7 @@ export default function Habits() {
                     activeHabit.plan,
                     activeHabit.unitType,
                     activeHabit.unitLabel,
+                    activeHabit.targetValue,
                     activeHabit.categoryId,
                     activeHabit.status,
                     newPinnedStatus,

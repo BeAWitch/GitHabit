@@ -44,4 +44,5 @@ app-example
 
 .vscode
 .npm-cache
+temp_npm_cache
 AGENTS.md

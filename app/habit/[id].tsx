@@ -349,7 +349,11 @@ export default function HabitDetail() {
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
           Contribution activity
         </Text>
-        <ContributionGraph contributions={contributions} days={getDaysInCurrentYear()} />
+        <ContributionGraph 
+          contributions={contributions} 
+          days={getDaysInCurrentYear()} 
+          targetValue={habit.targetValue}
+        />
       </View>
 
       {/* Daily changes chart */}
@@ -361,6 +365,7 @@ export default function HabitDetail() {
           data={last30DaysData}
           height={180}
           color={habit.color}
+          targetValue={habit.targetValue}
         />
       </View>
 

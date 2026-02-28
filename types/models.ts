@@ -11,6 +11,7 @@ export interface Habit {
   plan: string; // README-like plan/details
   unitType: 'count' | 'binary';
   unitLabel: string; // e.g. times, minutes, done
+  targetValue: number; // The target goal for the habit
   color: string; // The category dot color
   categoryId: number;
   categoryName: string;

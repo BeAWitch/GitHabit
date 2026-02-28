@@ -12,6 +12,7 @@ interface SimpleLineChartProps {
   height?: number;
   color?: string;
   lineWidth?: number;
+  targetValue?: number;
 }
 
 export function SimpleLineChart({
@@ -19,6 +20,7 @@ export function SimpleLineChart({
   height = 160,
   color,
   lineWidth = 2,
+  targetValue,
 }: SimpleLineChartProps) {
   const theme = useThemeColors();
   const chartColor = color || theme.color.primary;
@@ -36,9 +38,12 @@ export function SimpleLineChart({
       ];
     }
 
-    const max = Math.max(...processedData.map((d) => d.value));
+    let max = Math.max(...processedData.map((d) => d.value));
+    if (targetValue && targetValue > max) {
+      max = targetValue;
+    }
     return { points: processedData, maxValue: max > 0 ? max : 1 };
-  }, [data]);
+  }, [data, targetValue]);
 
   const handleLayout = (e: LayoutChangeEvent) => {
     setContainerWidth(e.nativeEvent.layout.width);
@@ -198,6 +203,17 @@ export function SimpleLineChart({
            <View className="w-full border-b border-github-lightBorder dark:border-github-darkBorder opacity-10 absolute" style={{ top: drawHeight }} />
         </View>
         
+        {/* Target Line */}
+        {targetValue && targetValue > 0 && targetValue <= maxValue && (
+          <View 
+            className="absolute inset-x-0 border-b border-dashed border-github-lightDanger dark:border-github-darkDanger z-0 opacity-50"
+            style={{ 
+              top: topPadding + drawHeight - (targetValue / maxValue) * drawHeight,
+              borderBottomWidth: 1,
+            }}
+          />
+        )}
+
         {/* Lines and points */}
         <View className="absolute inset-0 z-10">
           {lines}
