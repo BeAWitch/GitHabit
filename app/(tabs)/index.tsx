@@ -2,6 +2,7 @@ import { CommitModal } from "@/components/CommitModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateUtil";
+import { formatUnit } from "@/utils/unitFormatterUtil";
 import { Octicons } from "@expo/vector-icons";
 import { Link, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
@@ -132,7 +133,7 @@ export default function Home() {
                 >
                   <Text className="text-sm text-github-lightText dark:text-github-darkText">
                     <Text className="font-semibold">You</Text> committed{" "}
-                    {checkIn.value} {habit?.unitLabel || "time"} to{" "}
+                    {checkIn.value} {formatUnit(checkIn.value, habit?.unitLabel || "time")} to{" "}
                     <Link
                       href={`/habit/${checkIn.habitId}`}
                       asChild
@@ -167,7 +168,7 @@ export default function Home() {
         title={
           activeCommitHabit ? `Commit to ${activeCommitHabit.name}` : "Commit"
         }
-        unitLabel={activeCommitHabit?.unitLabel || "times"}
+        unitLabel={activeCommitHabit?.unitLabel || "time"}
         unitType={activeCommitHabit?.unitType || "count"}
         onClose={() => setCommitModalHabitId(null)}
         onSubmit={(value, message) => {

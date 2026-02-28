@@ -18,6 +18,8 @@ interface CommitModalProps {
   title: string;
   unitLabel: string;
   unitType: "count" | "binary";
+  initialMessage?: string;
+  initialValue?: number;
   onClose: () => void;
   onSubmit: (value: number, message: string) => void;
 }
@@ -27,19 +29,21 @@ export const CommitModal: React.FC<CommitModalProps> = ({
   title,
   unitLabel,
   unitType,
+  initialMessage = "",
+  initialValue = 1,
   onClose,
   onSubmit,
 }) => {
   const { color } = useThemeColors();
-  const [valueInput, setValueInput] = useState("1");
-  const [message, setMessage] = useState("");
+  const [valueInput, setValueInput] = useState(initialValue.toString());
+  const [message, setMessage] = useState(initialMessage);
 
   useEffect(() => {
     if (visible) {
-      setValueInput("1");
-      setMessage("");
+      setValueInput(initialValue.toString());
+      setMessage(initialMessage);
     }
-  }, [visible]);
+  }, [visible, initialValue, initialMessage]);
 
   const parsedValue = useMemo(() => {
     const nextValue = Number.parseInt(valueInput.trim(), 10);

@@ -100,6 +100,17 @@ export const createCheckIn = (habitId: number, message: string = '', value: numb
   return result.lastInsertRowId;
 };
 
+export const updateCheckIn = (id: number, message: string, value: number) => {
+  db.runSync(
+    'UPDATE check_ins SET message = ?, value = ? WHERE id = ?;',
+    [message, value, id]
+  );
+};
+
+export const deleteCheckIn = (id: number) => {
+  db.runSync('DELETE FROM check_ins WHERE id = ?;', [id]);
+};
+
 export const getCheckInsForHabit = (habitId: number): CheckIn[] => {
   return db.getAllSync<CheckIn>('SELECT * FROM check_ins WHERE habitId = ? ORDER BY timestamp DESC;', [habitId]);
 };

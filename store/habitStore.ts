@@ -17,6 +17,8 @@ interface HabitState {
   updateHabit: (id: number, name: string, description: string, plan: string, unitType: 'count' | 'binary', unitLabel: string, categoryId: number, status: 'active' | 'archived', pinned: number) => void;
   removeHabit: (id: number) => void;
   commitCheckIn: (habitId: number, message: string, value: number) => void;
+  updateCheckIn: (habitId: number, checkInId: number, message: string, value: number) => void;
+  removeCheckIn: (habitId: number, checkInId: number) => void;
 }
 
 export const useHabitStore = create<HabitState>((set, get) => ({
@@ -100,6 +102,18 @@ export const useHabitStore = create<HabitState>((set, get) => ({
 
   commitCheckIn: (habitId, message, value) => {
     RepoAPI.createCheckIn(habitId, message, value);
+    get().fetchData();
+    get().fetchHabitDetail(habitId);
+  },
+
+  updateCheckIn: (habitId, checkInId, message, value) => {
+    RepoAPI.updateCheckIn(checkInId, message, value);
+    get().fetchData();
+    get().fetchHabitDetail(habitId);
+  },
+
+  removeCheckIn: (habitId, checkInId) => {
+    RepoAPI.deleteCheckIn(checkInId);
     get().fetchData();
     get().fetchHabitDetail(habitId);
   },

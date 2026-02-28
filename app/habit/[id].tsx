@@ -22,6 +22,8 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime, getDaysInCurrentYear } from "@/utils/dateUtil";
 import { getMarkdownStyle } from "@/utils/markdownStyle";
+import { formatUnit } from "@/utils/unitFormatterUtil";
+import type { CheckIn } from "@/types/models";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
@@ -37,6 +39,8 @@ export default function HabitDetail() {
     habitContributions,
     fetchHabitDetail,
     commitCheckIn,
+    updateCheckIn,
+    removeCheckIn,
     removeHabit,
   } = useHabitStore();
 
@@ -44,6 +48,7 @@ export default function HabitDetail() {
   const [readmeHeight, setReadmeHeight] = useState(240);
   const [isReadmeFullScreen, setIsReadmeFullScreen] = useState(false);
   const [isCommitModalVisible, setIsCommitModalVisible] = useState(false);
+  const [editingCheckIn, setEditingCheckIn] = useState<CheckIn | null>(null);
   const readmeStartHeight = useRef(240);
 
   useEffect(() => {
@@ -177,6 +182,41 @@ export default function HabitDetail() {
     );
   };
 
+  const handleCheckInLongPress = (checkIn: CheckIn) => {
+    Alert.alert(
+      "Manage Commit",
+      `Modify or delete this commit?`,
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Edit",
+          onPress: () => {
+            setEditingCheckIn(checkIn);
+            setIsCommitModalVisible(true);
+          },
+        },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: () => {
+            Alert.alert(
+              "Delete Commit",
+              "Are you sure you want to delete this commit?",
+              [
+                { text: "Cancel", style: "cancel" },
+                {
+                  text: "Delete",
+                  style: "destructive",
+                  onPress: () => removeCheckIn(habitId, checkIn.id),
+                },
+              ]
+            );
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
       {/* Top Bar */}
@@ -279,7 +319,7 @@ export default function HabitDetail() {
             {totalCommits}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-            commits
+            {formatUnit(totalCommits, "commits")}
           </Text>
         </View>
         <View className="mr-6">
@@ -287,7 +327,7 @@ export default function HabitDetail() {
             {stats.total}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-            {habit.unitLabel}
+            {formatUnit(stats.total, habit.unitLabel)}
           </Text>
         </View>
         <View>
@@ -334,26 +374,29 @@ export default function HabitDetail() {
             </View>
           ) : (
             recentCheckIns.map((checkIn, index) => (
-              <View
+              <TouchableOpacity
                 key={checkIn.id}
                 className={`px-4 py-3 ${
                   index !== recentCheckIns.length - 1
                     ? "border-b border-github-lightBorder dark:border-github-darkBorder"
                     : ""
                 }`}
+                onLongPress={() => handleCheckInLongPress(checkIn)}
+                delayLongPress={400}
+                activeOpacity={0.6}
               >
                 <View className="flex-row justify-between items-start mb-1">
                   <Text className="text-sm text-github-lightText dark:text-github-darkText flex-1 mr-2">
                     {checkIn.message || "Completed habit session"}
                   </Text>
                   <Text className="text-xs font-semibold text-github-lightSuccess dark:text-github-darkSuccess">
-                    +{checkIn.value} {habit.unitLabel}
+                    +{checkIn.value} {formatUnit(checkIn.value, habit.unitLabel)}
                   </Text>
                 </View>
                 <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
                   {formatRelativeTime(checkIn.timestamp)} · {checkIn.dateString}
                 </Text>
-              </View>
+              </TouchableOpacity>
             ))
           )}
         </View>
@@ -369,12 +412,22 @@ export default function HabitDetail() {
       />
       <CommitModal
         visible={isCommitModalVisible}
-        title={`Commit to ${habit.name}`}
+        title={editingCheckIn ? "Edit Commit" : `Commit to ${habit.name}`}
         unitLabel={habit.unitLabel}
         unitType={habit.unitType}
-        onClose={() => setIsCommitModalVisible(false)}
+        initialMessage={editingCheckIn?.message || ""}
+        initialValue={editingCheckIn?.value || 1}
+        onClose={() => {
+          setIsCommitModalVisible(false);
+          setEditingCheckIn(null);
+        }}
         onSubmit={(value, message) => {
-          commitCheckIn(habitId, message || "Quick commit", value);
+          if (editingCheckIn) {
+            updateCheckIn(habitId, editingCheckIn.id, message, value);
+          } else {
+            commitCheckIn(habitId, message || "Quick commit", value);
+          }
+          setEditingCheckIn(null);
         }}
       />
       <Modal
