@@ -47,6 +47,16 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         contributionMap[c.dateString] = c.count;
       });
 
+      const habitContributions: Record<number, Record<string, number>> = {};
+      habits.forEach(habit => {
+        const hContData = RepoAPI.getHabitContributions(habit.id);
+        const hContMap: Record<string, number> = {};
+        hContData.forEach(c => {
+          hContMap[c.dateString] = c.count;
+        });
+        habitContributions[habit.id] = hContMap;
+      });
+
       checkIns.forEach((checkIn) => {
         const current = habitStats[checkIn.habitId] ?? { total: 0, lastTimestamp: null };
         const nextTotal = current.total + checkIn.value;
@@ -59,7 +69,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         };
       });
 
-      set({ habits, categories, checkIns, recentActivities, globalContributions: contributionMap, habitStats });
+      set({ habits, categories, checkIns, recentActivities, globalContributions: contributionMap, habitStats, habitContributions });
     } catch (error) {
       console.error('Failed to fetch data from DB:', error);
     }

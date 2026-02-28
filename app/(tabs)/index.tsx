@@ -125,7 +125,7 @@ export default function Home() {
   const { color } = useThemeColors();
   const router = useRouter();
 
-  const { habits, recentActivities, fetchData, commitCheckIn, fetchHabitDetail } =
+  const { habits, recentActivities, habitContributions, fetchData, commitCheckIn, fetchHabitDetail } =
     useHabitStore();
 
   const [commitModalHabitId, setCommitModalHabitId] = useState<number | null>(
@@ -205,7 +205,7 @@ export default function Home() {
               const habitId = habit.id;
               
               // We need habitContributions from store for calculating today's progress
-              const contributions = useHabitStore.getState().habitContributions[habitId] || {};
+              const contributions = habitContributions[habitId] || {};
               const todayCount = contributions[todayStr] || 0;
               const targetCount = habit.targetValue || 1;
 

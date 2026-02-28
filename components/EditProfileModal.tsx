@@ -54,8 +54,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
 
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'],
-      allowsEditing: true,
-      aspect: [1, 1],
+      allowsEditing: false, // Skip buggy OS cropper, we handle circular display via UI
       quality: 0.5,
     });
 
