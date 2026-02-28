@@ -3,6 +3,21 @@ import * as SQLite from 'expo-sqlite';
 // Open the database synchronously (new in Expo SQLite)
 export const db = SQLite.openDatabaseSync('githabit.db');
 
+export const clearAllData = () => {
+  try {
+    db.execSync(`
+      DROP TABLE IF EXISTS check_ins;
+      DROP TABLE IF EXISTS categories;
+      DROP TABLE IF EXISTS habits;
+    `);
+    console.log('Database cleared successfully.');
+    // Re-initialize to create empty tables
+    initDB();
+  } catch (error) {
+    console.error('Failed to clear database:', error);
+  }
+};
+
 export const initDB = () => {
   try {
     db.execSync('PRAGMA foreign_keys = ON;');
@@ -19,63 +34,11 @@ export const initDB = () => {
         color TEXT DEFAULT 'ghGreen',
         createdAt INTEGER NOT NULL,
         status TEXT DEFAULT 'active',
-        pinned INTEGER DEFAULT 0
+        pinned INTEGER DEFAULT 0,
+        categoryId INTEGER,
+        deletedAt INTEGER
       );
     `);
-
-    try {
-      db.execSync('ALTER TABLE habits ADD COLUMN plan TEXT;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.plan:', error);
-      }
-    }
-
-    try {
-      db.execSync("ALTER TABLE habits ADD COLUMN unitType TEXT DEFAULT 'binary';");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.unitType:', error);
-      }
-    }
-
-    try {
-      db.execSync("ALTER TABLE habits ADD COLUMN unitLabel TEXT DEFAULT 'done';");
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.unitLabel:', error);
-      }
-    }
-
-    try {
-      db.execSync('ALTER TABLE habits ADD COLUMN pinned INTEGER DEFAULT 0;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.pinned:', error);
-      }
-    }
-
-    try {
-      db.execSync('ALTER TABLE habits ADD COLUMN targetValue INTEGER DEFAULT 1;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.targetValue:', error);
-      }
-    }
-
-    try {
-      db.execSync('ALTER TABLE habits ADD COLUMN deletedAt INTEGER;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.deletedAt:', error);
-      }
-    }
 
     // Create Categories table
     db.execSync(`
@@ -99,15 +62,6 @@ export const initDB = () => {
       `);
     }
 
-    try {
-      db.execSync('ALTER TABLE habits ADD COLUMN categoryId INTEGER;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate habits.categoryId:', error);
-      }
-    }
-
     // Create CheckIns (Commits) table
     db.execSync(`
       CREATE TABLE IF NOT EXISTS check_ins (
@@ -122,24 +76,6 @@ export const initDB = () => {
       );
     `);
 
-    try {
-      db.execSync('ALTER TABLE check_ins ADD COLUMN value INTEGER DEFAULT 1;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate check_ins.value:', error);
-      }
-    }
-    
-    try {
-      db.execSync('ALTER TABLE check_ins ADD COLUMN targetValue INTEGER DEFAULT 1;');
-    } catch (error) {
-      const message = error instanceof Error ? error.message : String(error);
-      if (!message.includes('duplicate column name')) {
-        console.error('Failed to migrate check_ins.targetValue:', error);
-      }
-    }
-    
     // Create an index for faster heatmap queries
     db.execSync(`
       CREATE INDEX IF NOT EXISTS idx_check_ins_date ON check_ins(dateString);
