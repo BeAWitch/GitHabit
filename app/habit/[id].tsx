@@ -2,9 +2,11 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   Alert,
   Dimensions,
+  GestureResponderEvent,
   Modal,
   PanResponder,
   ScrollView,
+  StyleSheet,
   Text,
   TouchableOpacity,
   View,
@@ -49,6 +51,13 @@ export default function HabitDetail() {
   const [isReadmeFullScreen, setIsReadmeFullScreen] = useState(false);
   const [isCommitModalVisible, setIsCommitModalVisible] = useState(false);
   const [editingCheckIn, setEditingCheckIn] = useState<CheckIn | null>(null);
+  const [activeCheckInId, setActiveCheckInId] = useState<number | null>(null);
+  const [checkInMenuAnchor, setCheckInMenuAnchor] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
   const readmeStartHeight = useRef(240);
 
   useEffect(() => {
@@ -112,6 +121,11 @@ export default function HabitDetail() {
   const recentCheckIns = habitCheckIns
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 10); // Show top 10 recent
+
+  const activeCheckIn = useMemo(
+    () => checkIns.find((c) => c.id === activeCheckInId),
+    [checkIns, activeCheckInId],
+  );
 
   if (!habit) {
     return (
@@ -182,39 +196,29 @@ export default function HabitDetail() {
     );
   };
 
-  const handleCheckInLongPress = (checkIn: CheckIn) => {
-    Alert.alert(
-      "Manage Commit",
-      `Modify or delete this commit?`,
-      [
-        { text: "Cancel", style: "cancel" },
-        {
-          text: "Edit",
-          onPress: () => {
-            setEditingCheckIn(checkIn);
-            setIsCommitModalVisible(true);
-          },
-        },
-        {
-          text: "Delete",
-          style: "destructive",
-          onPress: () => {
-            Alert.alert(
-              "Delete Commit",
-              "Are you sure you want to delete this commit?",
-              [
-                { text: "Cancel", style: "cancel" },
-                {
-                  text: "Delete",
-                  style: "destructive",
-                  onPress: () => removeCheckIn(habitId, checkIn.id),
-                },
-              ]
-            );
-          },
-        },
-      ]
-    );
+  const handleCheckInLongPress = (checkIn: CheckIn, e: GestureResponderEvent) => {
+    const { pageX, pageY } = e.nativeEvent;
+    
+    // Ensure the menu doesn't go off-screen
+    const menuWidth = 150;
+    const menuHeight = 100; // Roughly 2 items
+    const screenWidth = Dimensions.get("window").width;
+    const screenHeight = Dimensions.get("window").height;
+
+    let xPos = pageX - 60; // Center roughly
+    if (xPos + menuWidth > screenWidth - 10) xPos = screenWidth - menuWidth - 10;
+    if (xPos < 10) xPos = 10;
+
+    let yPos = pageY;
+    if (yPos + menuHeight > screenHeight - 20) yPos = screenHeight - menuHeight - 20;
+
+    setCheckInMenuAnchor({
+      x: xPos,
+      y: yPos,
+      width: menuWidth,
+      height: 0,
+    });
+    setActiveCheckInId(checkIn.id);
   };
 
   return (
@@ -381,7 +385,7 @@ export default function HabitDetail() {
                     ? "border-b border-github-lightBorder dark:border-github-darkBorder"
                     : ""
                 }`}
-                onLongPress={() => handleCheckInLongPress(checkIn)}
+                onLongPress={(e) => handleCheckInLongPress(checkIn, e)}
                 delayLongPress={400}
                 activeOpacity={0.6}
               >
@@ -456,6 +460,81 @@ export default function HabitDetail() {
               </Text>
             )}
           </ScrollView>
+        </View>
+      </Modal>
+
+      {/* CheckIn Actions Modal */}
+      <Modal
+        visible={activeCheckInId !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveCheckInId(null)}
+      >
+        <View style={StyleSheet.absoluteFill}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setActiveCheckInId(null)}
+          />
+          {checkInMenuAnchor && activeCheckIn && (
+            <View
+              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden shadow-lg"
+              style={{
+                position: "absolute",
+                top: checkInMenuAnchor.y,
+                left: checkInMenuAnchor.x,
+                minWidth: checkInMenuAnchor.width,
+                zIndex: 20,
+              }}
+            >
+              <TouchableOpacity
+                className="flex-row items-center px-4 py-3 border-b border-github-lightBorder dark:border-github-darkBorder"
+                onPress={() => {
+                  setEditingCheckIn(activeCheckIn);
+                  setIsCommitModalVisible(true);
+                  setActiveCheckInId(null);
+                }}
+              >
+                <Octicons
+                  name="pencil"
+                  size={16}
+                  color={color.text}
+                  className="mr-3"
+                />
+                <Text className="text-sm text-github-lightText dark:text-github-darkText ml-2">
+                  Edit
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-row items-center px-4 py-3"
+                onPress={() => {
+                  setActiveCheckInId(null);
+                  Alert.alert(
+                    "Delete Commit",
+                    "Are you sure you want to delete this commit?",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Delete",
+                        style: "destructive",
+                        onPress: () => removeCheckIn(habitId, activeCheckIn.id),
+                      },
+                    ],
+                  );
+                }}
+              >
+                <Octicons
+                  name="trash"
+                  size={16}
+                  color={color.danger}
+                  className="mr-3"
+                />
+                <Text className="text-sm text-github-lightDanger dark:text-github-darkDanger ml-2">
+                  Delete
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </Modal>
     </ScrollView>

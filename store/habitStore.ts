@@ -1,11 +1,12 @@
 import { create } from 'zustand';
 import * as RepoAPI from '@/db/repositories';
-import type { Habit, CheckIn, Category } from '@/types/models';
+import type { Habit, CheckIn, Category, TimelineActivity } from '@/types/models';
 
 interface HabitState {
   habits: Habit[];
   categories: Category[];
   checkIns: CheckIn[];
+  recentActivities: TimelineActivity[];
   globalContributions: Record<string, number>; // Dictionary indexed by date string (YYYY-MM-DD)
   habitContributions: Record<number, Record<string, number>>;
   habitStats: Record<number, { total: number; lastTimestamp: number | null }>;
@@ -25,6 +26,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
   habits: [],
   categories: [],
   checkIns: [],
+  recentActivities: [],
   globalContributions: {},
   habitContributions: {},
   habitStats: {},
@@ -34,6 +36,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
       const categories = RepoAPI.getCategories();
       const habits = RepoAPI.getHabits();
       const checkIns = RepoAPI.getAllCheckIns();
+      const recentActivities = RepoAPI.getRecentActivities();
       const contributionsData = RepoAPI.getGlobalContributions();
       const habitStats: Record<number, { total: number; lastTimestamp: number | null }> = {};
       
@@ -54,7 +57,7 @@ export const useHabitStore = create<HabitState>((set, get) => ({
         };
       });
 
-      set({ habits, categories, checkIns, globalContributions: contributionMap, habitStats });
+      set({ habits, categories, checkIns, recentActivities, globalContributions: contributionMap, habitStats });
     } catch (error) {
       console.error('Failed to fetch data from DB:', error);
     }

@@ -1,5 +1,5 @@
 import { db } from './database';
-import type { Habit, CheckIn, ContributionData, Category } from '@/types/models';
+import type { Habit, CheckIn, ContributionData, Category, TimelineActivity } from '@/types/models';
 
 /**
  * Category Operations
@@ -81,8 +81,7 @@ export const updateHabit = (
 };
 
 export const deleteHabit = (id: number) => {
-  db.runSync('DELETE FROM check_ins WHERE habitId = ?;', [id]);
-  db.runSync('DELETE FROM habits WHERE id = ?;', [id]);
+  db.runSync('UPDATE habits SET status = ?, deletedAt = ? WHERE id = ?;', ['deleted', Date.now(), id]);
 };
 
 /**
@@ -117,6 +116,52 @@ export const getCheckInsForHabit = (habitId: number): CheckIn[] => {
 
 export const getAllCheckIns = (): CheckIn[] => {
   return db.getAllSync<CheckIn>('SELECT * FROM check_ins ORDER BY timestamp DESC;');
+};
+
+export const getRecentActivities = (): TimelineActivity[] => {
+  return db.getAllSync<TimelineActivity>(`
+    SELECT 
+      'checkin_' || c.id AS id,
+      'check_in' AS type,
+      h.id AS habitId,
+      h.name AS habitName,
+      h.unitLabel AS unitLabel,
+      c.timestamp AS timestamp,
+      c.message AS message,
+      c.value AS value
+    FROM check_ins c
+    JOIN habits h ON c.habitId = h.id
+
+    UNION ALL
+
+    SELECT 
+      'create_' || h.id AS id,
+      'create' AS type,
+      h.id AS habitId,
+      h.name AS habitName,
+      h.unitLabel AS unitLabel,
+      h.createdAt AS timestamp,
+      NULL AS message,
+      NULL AS value
+    FROM habits h
+
+    UNION ALL
+
+    SELECT 
+      'delete_' || h.id AS id,
+      'delete' AS type,
+      h.id AS habitId,
+      h.name AS habitName,
+      h.unitLabel AS unitLabel,
+      h.deletedAt AS timestamp,
+      NULL AS message,
+      NULL AS value
+    FROM habits h
+    WHERE h.status = 'deleted' AND h.deletedAt IS NOT NULL
+
+    ORDER BY timestamp DESC
+    LIMIT 100;
+  `);
 };
 
 /**

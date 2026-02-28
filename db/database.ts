@@ -58,6 +58,15 @@ export const initDB = () => {
       }
     }
 
+    try {
+      db.execSync('ALTER TABLE habits ADD COLUMN deletedAt INTEGER;');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      if (!message.includes('duplicate column name')) {
+        console.error('Failed to migrate habits.deletedAt:', error);
+      }
+    }
+
     // Create Categories table
     db.execSync(`
       CREATE TABLE IF NOT EXISTS categories (

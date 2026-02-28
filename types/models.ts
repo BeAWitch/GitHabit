@@ -28,6 +28,17 @@ export interface CheckIn {
   dateString: string; // YYYY-MM-DD for easy grouping (the heatmap logic)
 }
 
+export interface TimelineActivity {
+  id: string;
+  type: 'check_in' | 'create' | 'delete';
+  habitId: number;
+  habitName: string;
+  unitLabel?: string;
+  timestamp: number;
+  message?: string;
+  value?: number;
+}
+
 export interface ContributionData {
   dateString: string;
   count: number;

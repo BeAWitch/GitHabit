@@ -10,7 +10,7 @@ import {
 } from "react-native";
 
 import { Octicons } from "@expo/vector-icons";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 
 import { HabitFormModal } from "@/components/HabitFormModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
@@ -31,7 +31,7 @@ const SORT_OPTIONS = [
 
 export default function Habits() {
   const { color } = useThemeColors();
-  const { habits, habitStats, categories, fetchData, fetchHabitDetail } =
+  const { habits, habitStats, categories, fetchData, fetchHabitDetail, updateHabit } =
     useHabitStore();
 
   const [isModalVisible, setModalVisible] = useState(false);
@@ -45,6 +45,14 @@ export default function Habits() {
     "type" | "sort" | "category" | null
   >(null);
   const [menuAnchor, setMenuAnchor] = useState<{
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+  } | null>(null);
+
+  const [activeHabitId, setActiveHabitId] = useState<number | null>(null);
+  const [habitMenuAnchor, setHabitMenuAnchor] = useState<{
     x: number;
     y: number;
     width: number;
@@ -151,6 +159,11 @@ export default function Habits() {
         : categoryFilter === null
           ? "all"
           : String(categoryFilter);
+
+  const activeHabit = useMemo(
+    () => habits.find((h) => h.id === activeHabitId),
+    [habits, activeHabitId],
+  );
 
   return (
     <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
@@ -259,16 +272,32 @@ export default function Habits() {
                     asChild
                     onPress={() => fetchHabitDetail(habit.id)}
                   >
-                    <TouchableOpacity>
+                    <TouchableOpacity className="flex-row items-center">
                       <Text
                         className="text-lg font-semibold"
                         style={{ color: color.link }}
                       >
                         {habit.name}
                       </Text>
+                      {habit.pinned === 1 && (
+                        <View className="ml-2">
+                          <Octicons name="pin" size={14} color={color.muted} />
+                        </View>
+                      )}
                     </TouchableOpacity>
                   </Link>
-                  <TouchableOpacity>
+                  <TouchableOpacity
+                    onPress={(e) => {
+                      const { pageX, pageY } = e.nativeEvent;
+                      setHabitMenuAnchor({
+                        x: pageX - 120, // offset to show menu to the left
+                        y: pageY - 15,
+                        width: 130,
+                        height: 0,
+                      });
+                      setActiveHabitId(habit.id);
+                    }}
+                  >
                     <Octicons
                       name="kebab-horizontal"
                       size={16}
@@ -354,6 +383,82 @@ export default function Habits() {
                   )}
                 </TouchableOpacity>
               ))}
+            </View>
+          )}
+        </View>
+      </Modal>
+
+      {/* Habit Actions Modal */}
+      <Modal
+        visible={activeHabitId !== null}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setActiveHabitId(null)}
+      >
+        <View style={StyleSheet.absoluteFill}>
+          <TouchableOpacity
+            style={StyleSheet.absoluteFill}
+            activeOpacity={1}
+            onPress={() => setActiveHabitId(null)}
+          />
+          {habitMenuAnchor && activeHabit && (
+            <View
+              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden shadow-lg"
+              style={{
+                position: "absolute",
+                top: habitMenuAnchor.y,
+                left: habitMenuAnchor.x,
+                minWidth: habitMenuAnchor.width,
+                zIndex: 20,
+              }}
+            >
+              <TouchableOpacity
+                className="flex-row items-center px-4 py-3 border-b border-github-lightBorder dark:border-github-darkBorder"
+                onPress={() => {
+                  const newPinnedStatus = activeHabit.pinned ? 0 : 1;
+                  updateHabit(
+                    activeHabit.id,
+                    activeHabit.name,
+                    activeHabit.description,
+                    activeHabit.plan,
+                    activeHabit.unitType,
+                    activeHabit.unitLabel,
+                    activeHabit.categoryId,
+                    activeHabit.status,
+                    newPinnedStatus,
+                  );
+                  setActiveHabitId(null);
+                }}
+              >
+                <Octicons
+                  name={activeHabit.pinned ? "pin" : "pin"}
+                  size={16}
+                  color={color.text}
+                  className="mr-3"
+                  style={{ opacity: activeHabit.pinned ? 0.5 : 1 }}
+                />
+                <Text className="text-sm text-github-lightText dark:text-github-darkText ml-2">
+                  {activeHabit.pinned ? "Unpin" : "Pin to top"}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className="flex-row items-center px-4 py-3"
+                onPress={() => {
+                  fetchHabitDetail(activeHabit.id);
+                  setActiveHabitId(null);
+                  router.push(`/habit/${activeHabit.id}`);
+                }}
+              >
+                <Octicons
+                  name="file"
+                  size={16}
+                  color={color.text}
+                  className="mr-3"
+                />
+                <Text className="text-sm text-github-lightText dark:text-github-darkText ml-2">
+                  View details
+                </Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
