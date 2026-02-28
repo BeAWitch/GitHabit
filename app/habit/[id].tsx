@@ -23,10 +23,12 @@ import { SimpleLineChart } from "@/components/SimpleLineChart";
 import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
-import { formatRelativeTime, getDaysInCurrentYear } from "@/utils/dateUtil";
+import { formatRelativeTime } from "@/utils/dateUtil";
 import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { formatUnit } from "@/utils/unitFormatterUtil";
 import type { CheckIn } from "@/types/models";
+import { useYearFilter } from "@/hooks/useYearFilter";
+import { YearPicker } from "@/components/YearPicker";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
@@ -116,10 +118,21 @@ export default function HabitDetail() {
     return data;
   }, [contributions]);
 
-  // Filter and sort recent check-ins
-  const habitCheckIns = checkIns.filter((c) => c.habitId === habitId);
+  const habitCheckIns = useMemo(
+    () => checkIns.filter((c) => c.habitId === habitId),
+    [checkIns, habitId]
+  );
+
+  const {
+    selectedYear,
+    setSelectedYear,
+    availableYears,
+    graphDays,
+    graphEndDate,
+  } = useYearFilter(habitCheckIns);
+
   const totalCommits = habitCheckIns.length;
-  const recentCheckIns = habitCheckIns
+  const recentCheckIns = [...habitCheckIns]
     .sort((a, b) => b.timestamp - a.timestamp)
     .slice(0, 10); // Show top 10 recent
 
@@ -368,12 +381,20 @@ export default function HabitDetail() {
 
       {/* Contribution chart */}
       <View className="mb-6">
-        <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Contribution activity
-        </Text>
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
+            Contribution activity
+          </Text>
+          <YearPicker
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearSelect={setSelectedYear}
+          />
+        </View>
         <ContributionGraph 
           contributions={contributions} 
-          days={getDaysInCurrentYear()} 
+          days={graphDays}
+          endDate={graphEndDate}
           targetValue={habit.targetValue}
         />
       </View>

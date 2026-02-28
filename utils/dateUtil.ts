@@ -17,11 +17,7 @@ export const formatRelativeTime = (timestamp: number | null): string => {
   return `${days} days ago`;
 };
 
-export const getDaysInCurrentYear = (): number => {
-    const now = new Date();
-    const year = now.getFullYear();
-
-    const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || (year % 400 === 0);
-
-    return isLeapYear ? 366 : 365;
-}
+export const getDaysInYear = (year: number = new Date().getFullYear()): number => {
+  const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+  return isLeapYear ? 366 : 365;
+};

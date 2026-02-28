@@ -1,3 +1,5 @@
+import { useYearFilter } from "@/hooks/useYearFilter";
+import { YearPicker } from "@/components/YearPicker";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useThemeStore } from "@/store/themeStore";
 import { useHabitStore } from "@/store/habitStore";
@@ -5,19 +7,27 @@ import { useUserStore } from "@/store/userStore";
 import { Octicons } from "@expo/vector-icons";
 import { Image, ScrollView, Text, TouchableOpacity, View } from "react-native";
 import { ContributionGraph } from "@/components/ContributionGraph";
-import { getDaysInCurrentYear } from "@/utils/dateUtil";
 import { useMemo, useState } from "react";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { Link } from "expo-router";
+import { formatUnit } from "@/utils/unitFormatterUtil";
 
 export default function Profile() {
   const { theme, setTheme } = useThemeStore();
   const { profile, updateProfile } = useUserStore();
   const { color } = useThemeColors();
-  const { globalContributions, habits, checkIns, fetchHabitDetail } = useHabitStore();
+  const { habits, checkIns, fetchHabitDetail } = useHabitStore();
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+  
+  const {
+    selectedYear,
+    setSelectedYear,
+    availableYears,
+    graphDays,
+    graphEndDate,
+  } = useYearFilter(checkIns);
 
-  const activeDays = useMemo(() => {
+  const allGoalsMetPerDay = useMemo(() => {
     const dailyHabitSums: Record<string, Record<number, number>> = {};
     checkIns.forEach(ci => {
       if (!dailyHabitSums[ci.dateString]) dailyHabitSums[ci.dateString] = {};
@@ -29,22 +39,27 @@ export default function Profile() {
       habitTargets[h.id] = h.targetValue || 1;
     });
 
-    let count = 0;
+    const metPerDay: Record<string, number> = {};
     for (const dateStr in dailyHabitSums) {
       const sums = dailyHabitSums[dateStr];
-      let didMeetGoal = false;
+      let goalsMet = 0;
       for (const habitIdStr in sums) {
         const hId = parseInt(habitIdStr);
         const target = habitTargets[hId] || 1;
         if (sums[hId] >= target) {
-          didMeetGoal = true;
-          break;
+          goalsMet++;
         }
       }
-      if (didMeetGoal) count++;
+      if (goalsMet > 0) {
+        metPerDay[dateStr] = goalsMet;
+      }
     }
-    return count;
+    return metPerDay;
   }, [checkIns, habits]);
+
+  const activeDays = useMemo(() => {
+    return Object.entries(allGoalsMetPerDay).filter(([dateStr]) => dateStr.startsWith(selectedYear.toString())).length;
+  }, [allGoalsMetPerDay, selectedYear]);
 
   const pinnedHabits = useMemo(
     () => habits.filter((habit) => (habit.pinned ?? 0) > 0),
@@ -53,26 +68,8 @@ export default function Profile() {
 
   // Compute a streak logic across all check-ins (at least one habit met its target)
   const currentStreak = useMemo(() => {
-    const dailyHabitSums: Record<string, Record<number, number>> = {};
-    checkIns.forEach(ci => {
-      if (!dailyHabitSums[ci.dateString]) dailyHabitSums[ci.dateString] = {};
-      dailyHabitSums[ci.dateString][ci.habitId] = (dailyHabitSums[ci.dateString][ci.habitId] || 0) + ci.value;
-    });
-
-    const habitTargets: Record<number, number> = {};
-    habits.forEach(h => {
-      habitTargets[h.id] = h.targetValue || 1;
-    });
-
     const didMeetAnyGoal = (dateStr: string) => {
-      const sums = dailyHabitSums[dateStr];
-      if (!sums) return false;
-      for (const habitIdStr in sums) {
-        const hId = parseInt(habitIdStr);
-        const target = habitTargets[hId] || 1;
-        if (sums[hId] >= target) return true;
-      }
-      return false;
+      return (allGoalsMetPerDay[dateStr] || 0) > 0;
     };
 
     let streak = 0;
@@ -107,7 +104,7 @@ export default function Profile() {
       }
     }
     return streak;
-  }, [checkIns, habits]);
+  }, [allGoalsMetPerDay]);
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
@@ -188,10 +185,24 @@ export default function Profile() {
 
       {/* Contribution Graph Section */}
       <View className="mb-6">
-        <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          {activeDays} days with goals met in the last year
-        </Text>
-        <ContributionGraph contributions={globalContributions} days={getDaysInCurrentYear()} />
+        <View className="flex-row items-center justify-between mb-3">
+          <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
+            {activeDays} {formatUnit(activeDays, "day")} with goals met
+          </Text>
+          
+          {/* Year Dropdown Button */}
+          <YearPicker
+            selectedYear={selectedYear}
+            availableYears={availableYears}
+            onYearSelect={setSelectedYear}
+          />
+        </View>
+
+        <ContributionGraph 
+          contributions={allGoalsMetPerDay} 
+          days={graphDays} 
+          endDate={graphEndDate} 
+        />
       </View>
 
       {/* Pinned Habits Section (formerly Organizations) */}
