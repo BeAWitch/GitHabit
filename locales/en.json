@@ -57,6 +57,7 @@
     "goBack": "Go Back",
     "todaysGoal": "Today's Goal",
     "commit": "Commit",
+    "done": "Done",
     "readme": "README",
     "noPlan": "No plan defined yet. Start by setting a goal!",
     "commits": "commits",
@@ -115,6 +116,7 @@
     "messageLabel": "Commit message",
     "optional": "(optional)",
     "messagePlaceholder": "What did you do?",
+    "quickCommitHint": "💡 Hint: Enable 'Quick Commit' for binary habits in Settings",
     "cancel": "Cancel",
     "commit": "Commit",
     "editCommit": "Save changes"
@@ -176,6 +178,9 @@
     "importWarningDesc": "This action will overwrite all your existing habits, check-ins, profile, and settings. This cannot be undone. Do you want to continue?",
     "invalidFile": "Invalid backup file format",
     "continue": "Continue",
+    "habitSettings": "Habits",
+    "quickCommitBinary": "Quick Commit for Binary Habits",
+    "quickCommitBinaryDesc": "Commit immediately without opening the modal",
     "about": "About",
     "version": "Version"
   },
@@ -183,7 +188,8 @@
     "day": "day",
     "commit": "commit",
     "goal": "goal",
-    "time": "time"
+    "time": "time",
+    "done": "done"
   },
   "graph": {
     "less": "Less",

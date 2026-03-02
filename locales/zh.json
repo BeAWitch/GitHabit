@@ -57,6 +57,7 @@
     "goBack": "返回",
     "todaysGoal": "今日目标",
     "commit": "提交",
+    "done": "完成",
     "readme": "说明 (README)",
     "noPlan": "暂无计划内容。先设立一个目标吧！",
     "commits": "次提交",
@@ -115,6 +116,7 @@
     "messageLabel": "提交备注",
     "optional": "(可选)",
     "messagePlaceholder": "记录一下做了什么？",
+    "quickCommitHint": "💡 提示：可以在设置中为完成类习惯开启一键打卡",
     "cancel": "取消",
     "commit": "提交",
     "editCommit": "保存更改"
@@ -176,6 +178,9 @@
     "importWarningDesc": "此操作将覆盖您现有的所有习惯、打卡记录、个人资料和设置，且不可撤销。是否继续？",
     "invalidFile": "无效的备份文件格式",
     "continue": "继续",
+    "habitSettings": "习惯",
+    "quickCommitBinary": "完成类习惯一键打卡",
+    "quickCommitBinaryDesc": "打卡时不再弹出确认窗口",
     "about": "关于",
     "version": "版本"
   },
@@ -183,7 +188,8 @@
     "day": "天",
     "commit": "次提交",
     "goal": "个目标",
-    "time": "次"
+    "time": "次",
+    "done": "完成"
   },
   "graph": {
     "less": "少",

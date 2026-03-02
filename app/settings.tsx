@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator, Switch } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Octicons } from '@expo/vector-icons';
 import { useThemeStore, ThemeMode } from '@/store/themeStore';
 import { useLanguageStore, LanguageMode } from '@/store/languageStore';
+import { useSettingsStore } from '@/store/settingsStore';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTranslation } from 'react-i18next';
 import { exportDataToJSON, importDataFromJSON } from '@/utils/backup';
@@ -11,6 +12,7 @@ import { exportDataToJSON, importDataFromJSON } from '@/utils/backup';
 export default function SettingsScreen() {
   const { theme, setTheme } = useThemeStore();
   const { language, setLanguage } = useLanguageStore();
+  const { quickCommitBinary, setQuickCommitBinary } = useSettingsStore();
   const { color } = useThemeColors();
   const router = useRouter();
   const { t } = useTranslation();
@@ -135,6 +137,31 @@ export default function SettingsScreen() {
           <LanguageOption mode="auto" label={t('settings.auto')} icon="globe" />
           <LanguageOption mode="en" label={t('settings.english')} icon="typography" />
           <LanguageOption mode="zh" label={t('settings.chinese')} icon="typography" />
+        </View>
+
+        <View className="mt-8 mb-2 px-4">
+          <Text className="text-sm font-semibold text-github-lightMuted dark:text-github-darkMuted uppercase tracking-wider">
+            {t('settings.habitSettings')}
+          </Text>
+        </View>
+        
+        <View className="border-t border-github-lightBorder dark:border-github-darkBorder">
+          <View className="flex-row items-center justify-between p-4 border-b border-github-lightBorder dark:border-github-darkBorder bg-github-lightBg dark:bg-github-darkBg">
+            <View className="flex-1 pr-4">
+              <Text className="text-github-lightText dark:text-github-darkText text-base font-medium">
+                {t('settings.quickCommitBinary')}
+              </Text>
+              <Text className="text-github-lightMuted dark:text-github-darkMuted text-sm mt-1">
+                {t('settings.quickCommitBinaryDesc')}
+              </Text>
+            </View>
+            <Switch
+              value={quickCommitBinary}
+              onValueChange={setQuickCommitBinary}
+              trackColor={{ false: color.border, true: color.primary }}
+              thumbColor={quickCommitBinary ? '#ffffff' : '#f4f3f4'}
+            />
+          </View>
         </View>
 
         <View className="mt-8 mb-2 px-4">

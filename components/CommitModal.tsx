@@ -53,7 +53,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
     return Number.isFinite(nextValue) ? nextValue : 0;
   }, [valueInput]);
 
-  const isValid = parsedValue > 0;
+  const isValid = unitType === "binary" || parsedValue > 0;
   const valueLabel = unitType === "binary" ? formatUnit(2, t("units.time")) : unitLabel || formatUnit(2, t("units.time"));
 
   return (
@@ -78,28 +78,38 @@ export const CommitModal: React.FC<CommitModalProps> = ({
           </View>
 
           <View className="p-4">
-            <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              {t("commitModal.valueLabel")} ({valueLabel})
-            </Text>
-            <TextInput
-              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
-              placeholder="1"
-              placeholderTextColor={color.muted}
-              keyboardType="number-pad"
-              value={valueInput}
-              onChangeText={setValueInput}
-            />
+            {unitType !== "binary" && (
+              <>
+                <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
+                  {t("commitModal.valueLabel")} ({valueLabel})
+                </Text>
+                <TextInput
+                  className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
+                  placeholder="1"
+                  placeholderTextColor={color.muted}
+                  keyboardType="number-pad"
+                  value={valueInput}
+                  onChangeText={setValueInput}
+                />
+              </>
+            )}
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
               {t("commitModal.messageLabel")} <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">{t("commitModal.optional")}</Text>
             </Text>
             <TextInput
-              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
+              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
               placeholder={t("commitModal.messagePlaceholder")}
               placeholderTextColor={color.muted}
               value={message}
               onChangeText={setMessage}
             />
+
+            {unitType === "binary" && (
+              <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mt-1">
+                {t("commitModal.quickCommitHint")}
+              </Text>
+            )}
           </View>
 
           <View className="p-4 border-t border-github-lightBorder dark:border-github-darkBorder flex-row justify-end">
@@ -116,7 +126,8 @@ export const CommitModal: React.FC<CommitModalProps> = ({
               style={{ backgroundColor: color.primary }}
               disabled={!isValid}
               onPress={() => {
-                onSubmit(parsedValue, message.trim());
+                const finalValue = unitType === "binary" ? (initialValue > 0 ? initialValue : 1) : parsedValue;
+                onSubmit(finalValue, message.trim());
                 onClose();
               }}
             >

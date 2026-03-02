@@ -10,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import type { Habit, TimelineActivity } from "@/types/models";
 import { useTranslation } from "react-i18next";
+import { useSettingsStore } from "@/store/settingsStore";
 
 type ActivityGroup = {
   id: string;
@@ -127,6 +128,7 @@ export default function Home() {
   const { color } = useThemeColors();
   const router = useRouter();
   const { t } = useTranslation();
+  const { quickCommitBinary } = useSettingsStore();
 
   const { habits, recentActivities, habitContributions, fetchData, commitCheckIn, fetchHabitDetail } =
     useHabitStore();
@@ -134,6 +136,7 @@ export default function Home() {
   const [commitModalHabitId, setCommitModalHabitId] = useState<number | null>(
     null,
   );
+  const [isPinnedExpanded, setIsPinnedExpanded] = useState(true);
 
   useEffect(() => {
     fetchData();
@@ -182,92 +185,112 @@ export default function Home() {
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
       {/* Pinned Habits Section */}
       <View className="mb-6">
-        <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          {t('home.pinned')}
-        </Text>
+        <TouchableOpacity 
+          className="flex-row items-center justify-between mb-3"
+          onPress={() => setIsPinnedExpanded(!isPinnedExpanded)}
+        >
+          <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+            {t('home.pinned')}
+          </Text>
+          <Octicons 
+            name={isPinnedExpanded ? "chevron-up" : "chevron-down"} 
+            size={16} 
+            color={color.muted} 
+          />
+        </TouchableOpacity>
 
-        {pinnedHabits.length === 0 ? (
-          <View className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-4 rounded-md items-center">
-            <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-2">
-              {t('home.noPinned')}
-            </Text>
-            <TouchableOpacity
-              onPress={() => router.push("/habits")}
-              className="px-3 py-1.5 rounded-md border border-github-lightBorder dark:border-github-darkBorder"
-            >
-              <Text className="text-xs font-semibold text-github-lightText dark:text-github-darkText">
-                {t('home.createNew')}
+        {isPinnedExpanded && (
+          pinnedHabits.length === 0 ? (
+            <View className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-4 rounded-md items-center">
+              <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-2">
+                {t('home.noPinned')}
               </Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <View className="flex-row flex-wrap justify-between gap-y-3">
-            {pinnedHabits.map((habit) => {
-              // Calculate today's progress for pinned habits
-              const todayStr = new Date().toISOString().split("T")[0];
-              const habitId = habit.id;
-              
-              // We need habitContributions from store for calculating today's progress
-              const contributions = habitContributions[habitId] || {};
-              const todayCount = contributions[todayStr] || 0;
-              const targetCount = habit.targetValue || 1;
-
-              return (
-                <View
-                  key={habit.id}
-                  className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between relative"
-                >
-                  <View className="absolute top-3 right-4 z-10">
-                    <GoalProgressRing
-                      currentValue={todayCount}
-                      targetValue={targetCount}
-                      size={30}
-                      strokeWidth={3}
-                    />
-                  </View>
-                  <View>
-                    <View className="flex-row items-center mb-1 pr-6">
-                      <Octicons
-                        name="repo"
-                        size={16}
-                        color={color.text}
-                        className="mr-2"
-                      />
-                      <Link
-                        href={`/habit/${habit.id}`}
-                        asChild
-                        onPress={() => fetchHabitDetail(habit.id)}
-                      >
-                        <TouchableOpacity className="flex-1">
-                          <Text
-                            className="text-github-lightText dark:text-github-darkText font-semibold text-sm"
-                            numberOfLines={1}
-                          >
-                            {habit.name}
-                          </Text>
-                        </TouchableOpacity>
-                      </Link>
-                    </View>
-                    <Text
-                      className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-3 h-8"
-                      numberOfLines={2}
-                    >
-                      {habit.description || t('habits.noDescription')}
-                    </Text>
-                  </View>
+              <TouchableOpacity
+                onPress={() => router.push("/habits")}
+                className="px-3 py-1.5 rounded-md border border-github-lightBorder dark:border-github-darkBorder"
+              >
+                <Text className="text-xs font-semibold text-github-lightText dark:text-github-darkText">
+                  {t('home.createNew')}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View className="flex-row flex-wrap justify-between gap-y-3">
+              {pinnedHabits.map((habit) => {
+                // Calculate today's progress for pinned habits
+                const todayStr = new Date().toISOString().split("T")[0];
+                const habitId = habit.id;
+                
+                // We need habitContributions from store for calculating today's progress
+                const contributions = habitContributions[habitId] || {};
+                const todayCount = contributions[todayStr] || 0;
+                const targetCount = habit.targetValue || 1;
   
-                  {/* Quick Commit Button */}
-                  <TouchableOpacity
-                    className="py-1 rounded-md items-center"
-                    style={{ backgroundColor: color.primary }}
-                    onPress={() => setCommitModalHabitId(habit.id)}
+                return (
+                  <View
+                    key={habit.id}
+                    className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between relative"
                   >
-                    <Text className="text-white text-xs font-bold">{t('habit.commit')}</Text>
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
-          </View>
+                    <View className="absolute top-3 right-4 z-10">
+                      <GoalProgressRing
+                        currentValue={todayCount}
+                        targetValue={targetCount}
+                        size={30}
+                        strokeWidth={3}
+                      />
+                    </View>
+                    <View>
+                      <View className="flex-row items-center mb-1 pr-6">
+                        <Octicons
+                          name="repo"
+                          size={16}
+                          color={color.text}
+                          className="mr-2"
+                        />
+                        <Link
+                          href={`/habit/${habit.id}`}
+                          asChild
+                          onPress={() => fetchHabitDetail(habit.id)}
+                        >
+                          <TouchableOpacity className="flex-1">
+                            <Text
+                              className="text-github-lightText dark:text-github-darkText font-semibold text-sm"
+                              numberOfLines={1}
+                            >
+                              {habit.name}
+                            </Text>
+                          </TouchableOpacity>
+                        </Link>
+                      </View>
+                      <Text
+                        className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-3 h-8"
+                        numberOfLines={2}
+                      >
+                        {habit.description || t('habits.noDescription')}
+                      </Text>
+                    </View>
+    
+                    {/* Quick Commit Button */}
+                    <TouchableOpacity
+                      className="py-1 rounded-md items-center"
+                      style={{ backgroundColor: color.primary }}
+                      onPress={() => {
+                        if (habit.unitType === 'binary' && quickCommitBinary) {
+                          commitCheckIn(habit.id, t('habit.quickCommit'), 1);
+                        } else {
+                          setCommitModalHabitId(habit.id);
+                        }
+                      }}
+                    >
+                      <Text className="text-white text-xs font-bold">
+                        {habit.unitType === 'binary' && quickCommitBinary ? t('habit.done') : t('habit.commit')}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+            </View>
+          )
         )}
       </View>
 

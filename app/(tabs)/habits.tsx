@@ -10,11 +10,12 @@ import {
 } from "react-native";
 
 import { Octicons } from "@expo/vector-icons";
-import { Link, router } from "expo-router";
+import { Link, router, Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
 
 import { HabitFormModal } from "@/components/HabitFormModal";
 import { GoalProgressRing } from "@/components/GoalProgressRing";
+import { HeaderMenu } from "@/components/HeaderMenu";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateUtil";
@@ -220,8 +221,41 @@ export default function Habits() {
     [habits, activeHabitId],
   );
 
+  const activeHabitsProgress = useMemo(() => {
+    const activeHabits = habits.filter((h) => h.status === "active");
+    const total = activeHabits.length;
+    let completed = 0;
+    
+    activeHabits.forEach((habit) => {
+      const todayValue = todayValues[habit.id] || 0;
+      const targetValue = habit.targetValue || 1;
+      if (todayValue >= targetValue) {
+        completed++;
+      }
+    });
+
+    return { completed, total };
+  }, [habits, todayValues]);
+
   return (
     <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
+      <Tabs.Screen
+        options={{
+          headerRight: () => (
+            <View className="flex-row items-center">
+              <View className="mr-2">
+                <GoalProgressRing
+                  currentValue={activeHabitsProgress.completed}
+                  targetValue={activeHabitsProgress.total}
+                  size={32}
+                  strokeWidth={4}
+                />
+              </View>
+              <HeaderMenu />
+            </View>
+          ),
+        }}
+      />
       {/* Header & Controls */}
       <View className="flex-row items-center justify-between mb-4">
         {/* Search Input */}

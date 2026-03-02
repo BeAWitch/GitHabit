@@ -23,6 +23,7 @@ import { SimpleLineChart } from "@/components/SimpleLineChart";
 import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
+import { useSettingsStore } from "@/store/settingsStore";
 import { formatRelativeTime } from "@/utils/dateUtil";
 import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { formatUnit } from "@/utils/unitFormatterUtil";
@@ -38,6 +39,7 @@ export default function HabitDetail() {
   const { t } = useTranslation();
 
   const habitId = Number(id);
+  const { quickCommitBinary } = useSettingsStore();
 
   const {
     habits,
@@ -334,10 +336,18 @@ export default function HabitDetail() {
             <TouchableOpacity
               className="px-3 py-2 rounded-md flex-row items-center"
               style={{ backgroundColor: color.primary }}
-              onPress={() => setIsCommitModalVisible(true)}
+              onPress={() => {
+                if (habit.unitType === 'binary' && quickCommitBinary) {
+                  commitCheckIn(habitId, t("habit.quickCommit"), 1);
+                } else {
+                  setIsCommitModalVisible(true);
+                }
+              }}
             >
-              <Octicons name="git-commit" size={14} color="white" />
-              <Text className="text-white font-semibold ml-2">{t("habit.commit")}</Text>
+              <Octicons name={habit.unitType === 'binary' && quickCommitBinary ? "check" : "git-commit"} size={14} color="white" />
+              <Text className="text-white font-semibold ml-2">
+                {habit.unitType === 'binary' && quickCommitBinary ? t("habit.done") : t("habit.commit")}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

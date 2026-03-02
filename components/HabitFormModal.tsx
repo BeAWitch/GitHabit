@@ -106,7 +106,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const handleSubmit = () => {
     if (!name.trim() || selectedCategoryId === null) return;
 
-    const finalUnitLabel = unitLabel.trim() || (unitType === "count" ? "times" : "done");
+    const finalUnitLabel = unitLabel.trim() || (unitType === "count" ? t("units.time") : t("units.done"));
     const parsedTarget = Math.max(1, parseInt(targetValue, 10) || 1);
 
     if (habitId) {
@@ -267,7 +267,13 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                     { label: t("habitForm.binary"), value: "binary" },
                   ]}
                   value={unitType}
-                  onChange={(nextValue) => setUnitType(nextValue as "count" | "binary")}
+                  onChange={(nextValue) => {
+                    const newType = nextValue as "count" | "binary";
+                    setUnitType(newType);
+                    if (newType === "binary") {
+                      setTargetValue("1");
+                    }
+                  }}
                 />
               </View>
               <View className="flex-1 ml-2">
@@ -284,19 +290,21 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               </View>
             </View>
 
-            <View className="mb-4">
-              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-                {t("habitForm.dailyTarget")} <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">{t("habitForm.goalPerDay")}</Text>
-              </Text>
-              <TextInput
-                className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
-                placeholder="1"
-                placeholderTextColor={color.muted}
-                value={targetValue}
-                onChangeText={(text) => setTargetValue(text.replace(/[^0-9]/g, ''))}
-                keyboardType="numeric"
-              />
-            </View>
+            {unitType !== "binary" && (
+              <View className="mb-4">
+                <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
+                  {t("habitForm.dailyTarget")} <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">{t("habitForm.goalPerDay")}</Text>
+                </Text>
+                <TextInput
+                  className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
+                  placeholder="1"
+                  placeholderTextColor={color.muted}
+                  value={targetValue}
+                  onChangeText={(text) => setTargetValue(text.replace(/[^0-9]/g, ''))}
+                  keyboardType="numeric"
+                />
+              </View>
+            )}
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
               {t("habitForm.category")}
