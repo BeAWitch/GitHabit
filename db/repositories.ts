@@ -8,6 +8,25 @@ export const getCategories = (): Category[] => {
   return db.getAllSync<Category>('SELECT * FROM categories ORDER BY id ASC;');
 };
 
+export const createCategory = (name: string, color: string): number => {
+  const result = db.runSync(
+    'INSERT INTO categories (name, color) VALUES (?, ?);',
+    [name, color]
+  );
+  return result.lastInsertRowId;
+};
+
+export const updateCategory = (id: number, name: string, color: string): void => {
+  db.runSync(
+    'UPDATE categories SET name = ?, color = ? WHERE id = ?;',
+    [name, color, id]
+  );
+};
+
+export const deleteCategory = (id: number): void => {
+  db.runSync('DELETE FROM categories WHERE id = ?;', [id]);
+};
+
 /**
  * Habit Operations
  */

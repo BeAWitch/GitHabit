@@ -109,7 +109,17 @@
     "no": "否",
     "cancel": "取消",
     "saveChanges": "保存更改",
-    "createHabit": "创建习惯"
+    "createHabit": "创建习惯",
+    "manageCategories": "管理分类",
+    "addCategory": "添加分类",
+    "categoryName": "分类名称",
+    "add": "添加",
+    "cannotDeleteCategory": "无法删除分类",
+    "categoryInUse": "此分类正在被 {{count}} 个习惯使用。请先重新分配这些习惯。",
+    "deleteCategoryTitle": "删除分类",
+    "deleteCategoryDesc": "确定要删除“{{name}}”吗？",
+    "delete": "删除",
+    "pickColor": "选择颜色"
   },
   "commitModal": {
     "valueLabel": "提交量",

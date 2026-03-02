@@ -21,6 +21,9 @@ interface HabitState {
   commitCheckIn: (habitId: number, message: string, value: number) => void;
   updateCheckIn: (habitId: number, checkInId: number, message: string, value: number) => void;
   removeCheckIn: (habitId: number, checkInId: number) => void;
+  addCategory: (name: string, color: string) => void;
+  updateCategory: (id: number, name: string, color: string) => void;
+  removeCategory: (id: number) => void;
 }
 
 export const useHabitStore = create<HabitState>((set, get) => ({
@@ -140,5 +143,20 @@ export const useHabitStore = create<HabitState>((set, get) => ({
     RepoAPI.deleteCheckIn(checkInId);
     get().fetchData();
     get().fetchHabitDetail(habitId);
+  },
+
+  addCategory: (name, color) => {
+    RepoAPI.createCategory(name, color);
+    get().fetchData();
+  },
+
+  updateCategory: (id, name, color) => {
+    RepoAPI.updateCategory(id, name, color);
+    get().fetchData();
+  },
+
+  removeCategory: (id) => {
+    RepoAPI.deleteCategory(id);
+    get().fetchData();
   },
 }));

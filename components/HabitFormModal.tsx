@@ -17,6 +17,7 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { useHabitStore } from "@/store/habitStore";
 import { SegmentedControl } from "@/components/SegmentedControl";
+import { CategoryManagerModal } from "@/components/CategoryManagerModal";
 import { useTranslation } from "react-i18next";
 
 interface HabitFormModalProps {
@@ -45,6 +46,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
   const [pinned, setPinned] = useState(false);
   const [readmeHeight, setReadmeHeight] = useState(100);
   const [isReadmeFullScreen, setIsReadmeFullScreen] = useState(false);
+  const [isCategoryManagerVisible, setIsCategoryManagerVisible] = useState(false);
   const readmeStartHeight = useRef(180);
   const [readmeViewMode, setReadmeViewMode] = useState<"edit" | "preview">("edit");
 
@@ -306,9 +308,20 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               </View>
             )}
 
-            <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              {t("habitForm.category")}
-            </Text>
+            <View className="flex-row items-center justify-between mb-1">
+              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
+                {t("habitForm.category")}
+              </Text>
+              <TouchableOpacity
+                className="flex-row items-center px-2 py-1 rounded border border-github-lightBorder dark:border-github-darkBorder"
+                onPress={() => setIsCategoryManagerVisible(true)}
+              >
+                <Octicons name="pencil" size={12} color={color.muted} className="mr-1" />
+                <Text className="text-xs text-github-lightText dark:text-github-darkText ml-1">
+                  {t("habitForm.edit")}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <View className="flex-row flex-wrap gap-2 mb-6">
               {categories.map((c) => (
                 <TouchableOpacity
@@ -428,6 +441,10 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
           </View>
         </View>
       </Modal>
+      <CategoryManagerModal 
+        visible={isCategoryManagerVisible} 
+        onClose={() => setIsCategoryManagerVisible(false)} 
+      />
     </>
   );
 };

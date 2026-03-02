@@ -109,7 +109,17 @@
     "no": "No",
     "cancel": "Cancel",
     "saveChanges": "Save changes",
-    "createHabit": "Create habit"
+    "createHabit": "Create habit",
+    "manageCategories": "Manage Categories",
+    "addCategory": "Add Category",
+    "categoryName": "Category Name",
+    "add": "Add",
+    "cannotDeleteCategory": "Cannot Delete Category",
+    "categoryInUse": "This category is used by {{count}} habit(s). Please reassign them first.",
+    "deleteCategoryTitle": "Delete Category",
+    "deleteCategoryDesc": "Are you sure you want to delete '{{name}}'?",
+    "delete": "Delete",
+    "pickColor": "Pick a Color"
   },
   "commitModal": {
     "valueLabel": "Value",
