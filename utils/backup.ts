@@ -6,6 +6,7 @@ import { useHabitStore } from '@/store/habitStore';
 import { useUserStore } from '@/store/userStore';
 import { useThemeStore } from '@/store/themeStore';
 import { useLanguageStore } from '@/store/languageStore';
+import { getLocalDateString } from './dateUtil';
 
 export interface BackupData {
   version: string;
@@ -56,7 +57,7 @@ export const exportDataToJSON = async (): Promise<boolean> => {
     const jsonString = JSON.stringify(backupData, null, 2);
 
     // 4. Save to temporary file
-    const dateStr = new Date().toISOString().split('T')[0];
+    const dateStr = getLocalDateString();
     const fileName = `githabit_backup_${dateStr}.json`;
     const file = new File(Paths.cache, fileName);
     if (file.exists) {

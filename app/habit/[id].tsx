@@ -27,7 +27,7 @@ import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { useSettingsStore } from "@/store/settingsStore";
-import { formatRelativeTime } from "@/utils/dateUtil";
+import { formatRelativeTime, getLocalDateString } from "@/utils/dateUtil";
 import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { formatUnit } from "@/utils/unitFormatterUtil";
 import type { CheckIn } from "@/types/models";
@@ -139,11 +139,7 @@ export default function HabitDetail() {
     for (let i = 29; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(today.getDate() - i);
-      const dateStr = [
-        d.getFullYear(),
-        String(d.getMonth() + 1).padStart(2, "0"),
-        String(d.getDate()).padStart(2, "0"),
-      ].join("-");
+      const dateStr = getLocalDateString(d);
       data.push({
         date: dateStr,
         value: contributions[dateStr] || 0,
@@ -190,13 +186,7 @@ export default function HabitDetail() {
   }, [contributions, targetValues, habit]);
 
   const todayValue = useMemo(() => {
-    const today = new Date();
-    const todayStr = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
-    ].join("-");
-    return contributions[todayStr] || 0;
+    return contributions[getLocalDateString()] || 0;
   }, [contributions]);
 
   const currentStreak = useMemo(() => {
@@ -215,11 +205,7 @@ export default function HabitDetail() {
     let checkDate = yesterday;
 
     while (true) {
-      const checkStr = [
-        checkDate.getFullYear(),
-        String(checkDate.getMonth() + 1).padStart(2, "0"),
-        String(checkDate.getDate()).padStart(2, "0"),
-      ].join("-");
+      const checkStr = getLocalDateString(checkDate);
 
       const dailyTarget = targetValues[checkStr] || habit.targetValue || 1;
 

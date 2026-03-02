@@ -18,6 +18,14 @@ export const formatRelativeTime = (timestamp: number | null): string => {
   return `${days} ${formatUnit(days, i18n.t("time.day"))} ${i18n.t("time.ago")}`;
 };
 
+export const getLocalDateString = (date: Date = new Date()): string => {
+  return [
+    date.getFullYear(),
+    String(date.getMonth() + 1).padStart(2, "0"),
+    String(date.getDate()).padStart(2, "0"),
+  ].join("-");
+};
+
 export const getDaysInYear = (year: number = new Date().getFullYear()): number => {
   const isLeapYear = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
   return isLeapYear ? 366 : 365;

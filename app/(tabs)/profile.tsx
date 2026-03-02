@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { formatUnit } from "@/utils/unitFormatterUtil";
 import { useTranslation } from "react-i18next";
+import { getLocalDateString } from "@/utils/dateUtil";
 
 const StatCard = ({
   title,
@@ -98,7 +99,7 @@ export default function Profile() {
       let goalsMet = 0;
       for (const habitIdStr in sums) {
         const hId = parseInt(habitIdStr);
-        const todayStr = new Date().toISOString().split('T')[0];
+        const todayStr = getLocalDateString();
         let target = currentHabitTargets[hId] || 1;
         if (dateStr !== todayStr) {
           target = dailyHabitTargets[dateStr]?.[hId] || target;
@@ -126,11 +127,7 @@ export default function Profile() {
 
     let streak = 0;
     const today = new Date();
-    const todayStr = [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
-    ].join("-");
+    const todayStr = getLocalDateString(today);
     
     if (didMeetAnyGoal(todayStr)) {
       streak++;
@@ -142,11 +139,7 @@ export default function Profile() {
     let checkDate = yesterday;
     
     while (true) {
-      const checkStr = [
-        checkDate.getFullYear(),
-        String(checkDate.getMonth() + 1).padStart(2, "0"),
-        String(checkDate.getDate()).padStart(2, "0"),
-      ].join("-");
+      const checkStr = getLocalDateString(checkDate);
       
       if (didMeetAnyGoal(checkStr)) {
         streak++;
@@ -202,11 +195,7 @@ export default function Profile() {
     const endDate = isCurrentYear ? new Date() : new Date(selectedYear, 11, 31);
     
     for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
-      const dStr = [
-        d.getFullYear(),
-        String(d.getMonth() + 1).padStart(2, "0"),
-        String(d.getDate()).padStart(2, "0"),
-      ].join("-");
+      const dStr = getLocalDateString(d);
       if ((allGoalsMetPerDay[dStr] || 0) > 0) {
         currentYearStreak++;
         maxYearStreak = Math.max(maxYearStreak, currentYearStreak);

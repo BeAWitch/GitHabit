@@ -1,5 +1,6 @@
 import { db } from './database';
 import type { Habit, CheckIn, ContributionData, Category, TimelineActivity } from '@/types/models';
+import { getLocalDateString } from '@/utils/dateUtil';
 
 /**
  * Category Operations
@@ -111,7 +112,7 @@ export const deleteHabit = (id: number) => {
 export const createCheckIn = (habitId: number, message: string = '', value: number = 1, targetValue: number = 1): number => {
   const now = new Date();
   const timestamp = now.getTime();
-  const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
+  const dateString = getLocalDateString(now); // YYYY-MM-DD
 
   const result = db.runSync(
     'INSERT INTO check_ins (habitId, message, value, targetValue, timestamp, dateString) VALUES (?, ?, ?, ?, ?, ?);',

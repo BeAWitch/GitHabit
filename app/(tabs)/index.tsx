@@ -1,7 +1,7 @@
 import { CommitModal } from "@/components/CommitModal";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
-import { formatRelativeTime } from "@/utils/dateUtil";
+import { formatRelativeTime, getLocalDateString } from "@/utils/dateUtil";
 import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { formatUnit } from "@/utils/unitFormatterUtil";
 import { Octicons } from "@expo/vector-icons";
@@ -218,7 +218,7 @@ export default function Home() {
             <View className="flex-row flex-wrap justify-between gap-y-3">
               {pinnedHabits.map((habit) => {
                 // Calculate today's progress for pinned habits
-                const todayStr = new Date().toISOString().split("T")[0];
+                const todayStr = getLocalDateString();
                 const habitId = habit.id;
                 
                 // We need habitContributions from store for calculating today's progress

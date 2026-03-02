@@ -18,7 +18,7 @@ import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { HeaderMenu } from "@/components/HeaderMenu";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
-import { formatRelativeTime } from "@/utils/dateUtil";
+import { formatRelativeTime, getLocalDateString } from "@/utils/dateUtil";
 export default function Habits() {
   const { color } = useThemeColors();
   const { t } = useTranslation();
@@ -77,12 +77,7 @@ export default function Habits() {
   const completionButtonRef = useRef<View>(null);
 
   const todayStr = useMemo(() => {
-    const today = new Date();
-    return [
-      today.getFullYear(),
-      String(today.getMonth() + 1).padStart(2, "0"),
-      String(today.getDate()).padStart(2, "0"),
-    ].join("-");
+    return getLocalDateString();
   }, []);
 
   useEffect(() => {

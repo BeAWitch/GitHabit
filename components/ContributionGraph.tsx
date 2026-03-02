@@ -1,5 +1,5 @@
 import { useThemeColors } from "@/hooks/useThemeColors";
-import { getDaysInYear } from "@/utils/dateUtil";
+import { getDaysInYear, getLocalDateString } from "@/utils/dateUtil";
 import React, { useMemo, useRef } from "react";
 import { ScrollView, Text, View } from "react-native";
 import { useTranslation } from "react-i18next";
@@ -45,11 +45,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date(end);
       d.setDate(end.getDate() - i);
-      const dateString = [
-        d.getFullYear(),
-        String(d.getMonth() + 1).padStart(2, "0"),
-        String(d.getDate()).padStart(2, "0"),
-      ].join("-");
+      const dateString = getLocalDateString(d);
       const count = contributions[dateString] || 0;
       const dailyTarget = targetValues?.[dateString];
       if (count > currentMax) {
@@ -147,7 +143,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
                   let isTargetMet = false;
 
                   if (day.count > 0) {
-                    const todayStr = new Date().toISOString().split('T')[0];
+                    const todayStr = getLocalDateString();
                     // Always use current targetValue for today, otherwise use historical if available
                     const activeTarget = (day.dateString === todayStr) ? (targetValue ?? day.targetValue) : (day.targetValue ?? targetValue);
                     if (activeTarget && activeTarget > 0) {
