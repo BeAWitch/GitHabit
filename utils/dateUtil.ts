@@ -1,9 +1,9 @@
 import { formatUnit } from "./unitFormatterUtil";
-import { useTranslation } from "react-i18next";
+import i18n from "./i18n";
 
 export const formatRelativeTime = (timestamp: number | null): string => {
   if (!timestamp) {
-    return "No commits";
+    return i18n.t("time.noCommits", { defaultValue: "No commits" });
   }
 
   const diffMs = Date.now() - timestamp;
@@ -11,13 +11,11 @@ export const formatRelativeTime = (timestamp: number | null): string => {
   const hours = Math.floor(diffMs / 3600000);
   const days = Math.floor(diffMs / 86400000);
 
-  const { t } = useTranslation();
-
-  if (minutes < 1) return t("time.justNow");
-  if (minutes < 60) return `${minutes} ${formatUnit(hours, t("time.minute"))} ${t("time.ago")}`;
-  if (hours < 24) return `${hours} ${formatUnit(hours, t("time.hour"))} ${t("time.ago")}`;
-  if (days === 1) return t("time.yesterday");
-  return `${days} ${formatUnit(days, t("time.day"))} ${t("time.ago")}`;
+  if (minutes < 1) return i18n.t("time.justNow");
+  if (minutes < 60) return `${minutes} ${formatUnit(hours, i18n.t("time.minute"))} ${i18n.t("time.ago")}`;
+  if (hours < 24) return `${hours} ${formatUnit(hours, i18n.t("time.hour"))} ${i18n.t("time.ago")}`;
+  if (days === 1) return i18n.t("time.yesterday");
+  return `${days} ${formatUnit(days, i18n.t("time.day"))} ${i18n.t("time.ago")}`;
 };
 
 export const getDaysInYear = (year: number = new Date().getFullYear()): number => {

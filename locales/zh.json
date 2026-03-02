@@ -187,6 +187,7 @@
     "hour": "小时",
     "yesterday": "昨天",
     "justNow": "刚刚",
-    "ago": "前"
+    "ago": "前",
+    "noCommits": "暂无提交记录"
   }
 }

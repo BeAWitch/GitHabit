@@ -187,6 +187,7 @@
     "hour": "hour",
     "yesterday": "Yesterday",
     "justNow": "Just now",
-    "ago": "ago"
+    "ago": "ago",
+    "noCommits": "No commits"
   }
 }
