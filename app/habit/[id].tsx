@@ -1,8 +1,10 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
+  ActivityIndicator,
   Alert,
   Dimensions,
   GestureResponderEvent,
+  InteractionManager,
   Modal,
   PanResponder,
   ScrollView,
@@ -15,6 +17,7 @@ import {
 import { Octicons } from "@expo/vector-icons";
 import { useLocalSearchParams, useRouter } from "expo-router";
 import Markdown from "react-native-markdown-display";
+import { useShallow } from "zustand/react/shallow";
 
 import { CommitModal } from "@/components/CommitModal";
 import { ContributionGraph } from "@/components/ContributionGraph";
@@ -52,8 +55,22 @@ export default function HabitDetail() {
     updateCheckIn,
     removeCheckIn,
     removeHabit,
-  } = useHabitStore();
+  } = useHabitStore(
+    useShallow((state) => ({
+      habits: state.habits,
+      checkIns: state.checkIns,
+      habitStats: state.habitStats,
+      habitContributions: state.habitContributions,
+      habitTargetValues: state.habitTargetValues,
+      fetchHabitDetail: state.fetchHabitDetail,
+      commitCheckIn: state.commitCheckIn,
+      updateCheckIn: state.updateCheckIn,
+      removeCheckIn: state.removeCheckIn,
+      removeHabit: state.removeHabit,
+    }))
+  );
 
+  const [isReady, setIsReady] = useState(false);
   const [isEditModalVisible, setIsEditModalVisible] = useState(false);
   const [readmeHeight, setReadmeHeight] = useState(240);
   const [isReadmeFullScreen, setIsReadmeFullScreen] = useState(false);
@@ -67,6 +84,13 @@ export default function HabitDetail() {
     height: number;
   } | null>(null);
   const readmeStartHeight = useRef(240);
+
+  useEffect(() => {
+    const task = InteractionManager.runAfterInteractions(() => {
+      setIsReady(true);
+    });
+    return () => task.cancel();
+  }, []);
 
   useEffect(() => {
     if (!isNaN(habitId)) {
@@ -142,9 +166,11 @@ export default function HabitDetail() {
   } = useYearFilter(habitCheckIns);
 
   const totalCommits = habitCheckIns.length;
-  const recentCheckIns = [...habitCheckIns]
-    .sort((a, b) => b.timestamp - a.timestamp)
-    .slice(0, 10); // Show top 10 recent
+  const recentCheckIns = useMemo(() => {
+    return [...habitCheckIns]
+      .sort((a, b) => b.timestamp - a.timestamp)
+      .slice(0, 10); // Show top 10 recent
+  }, [habitCheckIns]);
 
   const activeCheckIn = useMemo(
     () => checkIns.find((c) => c.id === activeCheckInId),
@@ -162,6 +188,50 @@ export default function HabitDetail() {
     });
     return count;
   }, [contributions, targetValues, habit]);
+
+  const todayValue = useMemo(() => {
+    const today = new Date();
+    const todayStr = [
+      today.getFullYear(),
+      String(today.getMonth() + 1).padStart(2, "0"),
+      String(today.getDate()).padStart(2, "0"),
+    ].join("-");
+    return contributions[todayStr] || 0;
+  }, [contributions]);
+
+  const currentStreak = useMemo(() => {
+    let streak = 0;
+    if (!habit) return streak;
+
+    const today = new Date();
+    const todayTarget = habit.targetValue || 1;
+
+    if (todayValue >= todayTarget) {
+      streak++;
+    }
+
+    const yesterday = new Date(today);
+    yesterday.setDate(today.getDate() - 1);
+    let checkDate = yesterday;
+
+    while (true) {
+      const checkStr = [
+        checkDate.getFullYear(),
+        String(checkDate.getMonth() + 1).padStart(2, "0"),
+        String(checkDate.getDate()).padStart(2, "0"),
+      ].join("-");
+
+      const dailyTarget = targetValues[checkStr] || habit.targetValue || 1;
+
+      if ((contributions[checkStr] || 0) >= dailyTarget) {
+        streak++;
+        checkDate.setDate(checkDate.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+    return streak;
+  }, [contributions, targetValues, habit, todayValue]);
 
   if (!habit) {
     return (
@@ -181,46 +251,7 @@ export default function HabitDetail() {
     );
   }
 
-  // Simple streak calculation
-  let currentStreak = 0;
-  const today = new Date();
-  const todayStr = [
-    today.getFullYear(),
-    String(today.getMonth() + 1).padStart(2, "0"),
-    String(today.getDate()).padStart(2, "0"),
-  ].join("-");
-
-  const todayValue = contributions[todayStr] || 0;
-  // If the target for today is different than the habit's current target
-  // (e.g. they changed it today but haven't committed yet, or they changed it after committing),
-  // we should evaluate today's goal against the *current* target to be intuitive.
-  const todayTarget = habit.targetValue || 1;
-
-  if (todayValue >= todayTarget) {
-    currentStreak++;
-  }
-
-  // Starting yesterday, check consecutive days
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  let checkDate = yesterday;
-
-  while (true) {
-    const checkStr = [
-      checkDate.getFullYear(),
-      String(checkDate.getMonth() + 1).padStart(2, "0"),
-      String(checkDate.getDate()).padStart(2, "0"),
-    ].join("-");
-
-    const dailyTarget = targetValues[checkStr] || habit.targetValue || 1;
-
-    if ((contributions[checkStr] || 0) >= dailyTarget) {
-      currentStreak++;
-      checkDate.setDate(checkDate.getDate() - 1);
-    } else {
-      break;
-    }
-  }
+  // The streak and todayValue are memoized above
 
   const handleDelete = () => {
     Alert.alert(
@@ -370,7 +401,9 @@ export default function HabitDetail() {
           </TouchableOpacity>
         </View>
         <ScrollView className="px-4 py-3" nestedScrollEnabled>
-          {habit.plan ? (
+          {!isReady ? (
+            <ActivityIndicator size="small" color={color.primary} className="mt-4" />
+          ) : habit.plan ? (
             <Markdown style={markdownStyle}>{habit.plan}</Markdown>
           ) : (
             <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
@@ -434,13 +467,19 @@ export default function HabitDetail() {
             onYearSelect={setSelectedYear}
           />
         </View>
-        <ContributionGraph 
-          contributions={contributions} 
-          days={graphDays}
-          endDate={graphEndDate}
-          targetValue={habit.targetValue}
-          targetValues={targetValues}
-        />
+        {!isReady ? (
+          <View className="h-32 justify-center items-center">
+            <ActivityIndicator size="small" color={color.primary} />
+          </View>
+        ) : (
+          <ContributionGraph 
+            contributions={contributions} 
+            days={graphDays}
+            endDate={graphEndDate}
+            targetValue={habit.targetValue}
+            targetValues={targetValues}
+          />
+        )}
       </View>
 
       {/* Daily changes chart */}
@@ -448,12 +487,18 @@ export default function HabitDetail() {
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
           {t("habit.dailyFrequency")}
         </Text>
-        <SimpleLineChart
-          data={last30DaysData}
-          height={180}
-          color={habit.color}
-          targetValue={habit.targetValue}
-        />
+        {!isReady ? (
+          <View className="h-[180px] justify-center items-center">
+            <ActivityIndicator size="small" color={color.primary} />
+          </View>
+        ) : (
+          <SimpleLineChart
+            data={last30DaysData}
+            height={180}
+            color={habit.color}
+            targetValue={habit.targetValue}
+          />
+        )}
       </View>
 
       {/* Recent commits */}
@@ -544,7 +589,9 @@ export default function HabitDetail() {
             </TouchableOpacity>
           </View>
           <ScrollView className="px-4 py-3">
-            {habit.plan ? (
+            {!isReady ? (
+              <ActivityIndicator size="small" color={color.primary} className="mt-4" />
+            ) : habit.plan ? (
               <Markdown style={markdownStyle}>{habit.plan}</Markdown>
             ) : (
               <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
