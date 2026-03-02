@@ -1,11 +1,12 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, ScrollView, Alert, ActivityIndicator } from 'react-native';
 import { Stack, useRouter } from 'expo-router';
 import { Octicons } from '@expo/vector-icons';
 import { useThemeStore, ThemeMode } from '@/store/themeStore';
 import { useLanguageStore, LanguageMode } from '@/store/languageStore';
 import { useThemeColors } from '@/hooks/useThemeColors';
 import { useTranslation } from 'react-i18next';
+import { exportDataToJSON, importDataFromJSON } from '@/utils/backup';
 
 export default function SettingsScreen() {
   const { theme, setTheme } = useThemeStore();
@@ -13,6 +14,48 @@ export default function SettingsScreen() {
   const { color } = useThemeColors();
   const router = useRouter();
   const { t } = useTranslation();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleExport = async () => {
+    setIsLoading(true);
+    try {
+      await exportDataToJSON();
+    } catch (e) {
+      Alert.alert(t('settings.exportData'), t('settings.exportError'));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImport = async () => {
+    Alert.alert(
+      t('settings.importWarningTitle'),
+      t('settings.importWarningDesc'),
+      [
+        { text: t('habit.cancel'), style: 'cancel' },
+        { 
+          text: t('settings.continue'), 
+          style: 'destructive',
+          onPress: async () => {
+            setIsLoading(true);
+            try {
+              const success = await importDataFromJSON();
+              if (success) {
+                Alert.alert(t('settings.importData'), t('settings.importSuccess'));
+              }
+            } catch (e: any) {
+              const msg = e.message === 'INVALID_FORMAT' || e.message === 'INVALID_JSON' 
+                ? t('settings.invalidFile') 
+                : t('settings.importError');
+              Alert.alert(t('settings.importData'), msg);
+            } finally {
+              setIsLoading(false);
+            }
+          }
+        }
+      ]
+    );
+  };
 
   const ThemeOption = ({ mode, label, icon }: { mode: ThemeMode, label: string, icon: keyof typeof Octicons.glyphMap }) => (
     <TouchableOpacity
@@ -96,6 +139,36 @@ export default function SettingsScreen() {
 
         <View className="mt-8 mb-2 px-4">
           <Text className="text-sm font-semibold text-github-lightMuted dark:text-github-darkMuted uppercase tracking-wider">
+            {t('settings.dataManagement')}
+          </Text>
+        </View>
+        
+        <View className="border-t border-github-lightBorder dark:border-github-darkBorder">
+          <TouchableOpacity
+            className="flex-row items-center p-4 border-b border-github-lightBorder dark:border-github-darkBorder bg-github-lightBg dark:bg-github-darkBg"
+            onPress={handleExport}
+            disabled={isLoading}
+          >
+            <Octicons name="upload" size={20} color={color.text} />
+            <Text className="text-github-lightText dark:text-github-darkText text-base ml-4 font-medium flex-1">
+              {t('settings.exportData')}
+            </Text>
+          </TouchableOpacity>
+          
+          <TouchableOpacity
+            className="flex-row items-center p-4 border-b border-github-lightBorder dark:border-github-darkBorder bg-github-lightBg dark:bg-github-darkBg"
+            onPress={handleImport}
+            disabled={isLoading}
+          >
+            <Octicons name="download" size={20} color={color.text} />
+            <Text className="text-github-lightText dark:text-github-darkText text-base ml-4 font-medium flex-1">
+              {t('settings.importData')}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View className="mt-8 mb-2 px-4">
+          <Text className="text-sm font-semibold text-github-lightMuted dark:text-github-darkMuted uppercase tracking-wider">
             {t('settings.about')}
           </Text>
         </View>
@@ -111,6 +184,16 @@ export default function SettingsScreen() {
           </View>
         </View>
       </ScrollView>
+      {isLoading && (
+        <View className="absolute inset-0 bg-black/50 items-center justify-center">
+          <View className="bg-github-lightBg dark:bg-github-darkCanvas p-6 rounded-lg items-center">
+            <ActivityIndicator size="large" color={color.primary} />
+            <Text className="text-github-lightText dark:text-github-darkText mt-4 font-medium">
+              Loading...
+            </Text>
+          </View>
+        </View>
+      )}
     </View>
   );
 }

@@ -498,7 +498,7 @@ export default function HabitDetail() {
       />
       <CommitModal
         visible={isCommitModalVisible}
-        title={editingCheckIn ? t("habit.editCommit") : `${t("habit.commitTo")}${habit.name}`}
+        title={editingCheckIn ? t("habit.editCommit") : `${t("habit.commitTo")} ${habit.name}`}
         unitLabel={habit.unitLabel}
         unitType={habit.unitType}
         initialMessage={editingCheckIn?.message || ""}
