@@ -10,6 +10,7 @@ import { ContributionGraph } from "@/components/ContributionGraph";
 import { useMemo, useState } from "react";
 import { EditProfileModal } from "@/components/EditProfileModal";
 import { formatUnit } from "@/utils/unitFormatterUtil";
+import { useTranslation } from "react-i18next";
 
 const StatCard = ({
   title,
@@ -54,6 +55,7 @@ const StatCard = ({
 );
 
 export default function Profile() {
+  const { t, i18n } = useTranslation();
   const { theme, setTheme } = useThemeStore();
   const { profile, updateProfile } = useUserStore();
   const { color } = useThemeColors();
@@ -185,12 +187,12 @@ export default function Profile() {
         busiestDateStr = dateStr;
       }
     }
-    let formattedBusiestDay = "None";
+    let formattedBusiestDay = t("profile.none");
     if (busiestDateStr) {
-      const [y, m, d] = busiestDateStr.split("-");
-      const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
-      formattedBusiestDay = dateObj.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-    }
+        const [y, m, d] = busiestDateStr.split("-");
+        const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+        formattedBusiestDay = dateObj.toLocaleDateString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { month: "short", day: "numeric" });
+      }
 
     // 4. Longest Streak
     let currentYearStreak = 0;
@@ -230,7 +232,7 @@ export default function Profile() {
       completionRate,
       daysPassed,
     };
-  }, [checkIns, habits, allGoalsMetPerDay, selectedYear, activeDays]);
+  }, [checkIns, habits, allGoalsMetPerDay, selectedYear, activeDays, i18n.language, t]);
 
   return (
     <ScrollView className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4">
@@ -252,12 +254,11 @@ export default function Profile() {
           {/* Status Placeholder */}
           {profile.status ? (
             <View className="flex-row items-center">
-              <Octicons
-                name="smiley"
-                size={14}
-                color={color.muted}
-                className="mr-1"
-              />
+              {profile.statusEmoji ? (
+                <Text className="text-sm mr-1">
+                  {profile.statusEmoji}
+                </Text>
+              ) : null}
               <Text className="text-xs text-github-lightText dark:text-github-darkText">
                 {profile.status}
               </Text>
@@ -272,7 +273,7 @@ export default function Profile() {
           <Text className="font-bold text-github-lightText dark:text-github-darkText text-base">
             {habits.length}{" "}
             <Text className="font-normal text-github-lightMuted dark:text-github-darkMuted">
-              habits
+              {t("profile.habitsCount")}
             </Text>
           </Text>
         </View>
@@ -280,7 +281,7 @@ export default function Profile() {
           <Text className="font-bold text-github-lightText dark:text-github-darkText text-base">
             {currentStreak}{" "}
             <Text className="font-normal text-github-lightMuted dark:text-github-darkMuted">
-              day streak
+              {t("profile.dayStreak")}
             </Text>
           </Text>
         </View>
@@ -293,7 +294,7 @@ export default function Profile() {
           onPress={() => setIsEditModalVisible(true)}
         >
           <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
-            Edit profile
+            {t("profile.editProfile")}
           </Text>
         </TouchableOpacity>
         {/* Quick Theme Toggle for demonstration */}
@@ -313,7 +314,7 @@ export default function Profile() {
       <View className="mb-6">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
-            {activeDays} {formatUnit(activeDays, "day")} with goals met
+            {activeDays} {formatUnit(activeDays, t("units.day"))} {t("profile.withGoalsMet")}
           </Text>
           
           {/* Year Dropdown Button */}
@@ -334,52 +335,52 @@ export default function Profile() {
       {/* Statistics Section */}
       <View className="mb-6">
         <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Statistics ({selectedYear})
+          {t("profile.statistics")} ({selectedYear})
         </Text>
         
         <View className="flex-row flex-wrap justify-between">
-          {/* Full Width: Total Check-ins */}
+          {/* Full Width: Total Commits */}
           <StatCard
             fullWidth
-            title="Total Commits"
+            title={t("profile.totalCommits")}
             value={yearlyStats.totalCheckIns.toString()}
-            subtitle={`${yearlyStats.totalCheckIns} ${formatUnit(yearlyStats.totalCheckIns, "commit")} in ${selectedYear}`}
+            subtitle={`${yearlyStats.totalCheckIns} ${t("profile.commitsIn")} ${selectedYear}`}
             iconName="git-commit"
             iconColor={color.text}
           />
           
           {/* Half Width: Longest Streak */}
           <StatCard
-            title="Longest Streak"
-            value={`${yearlyStats.maxStreak} ${formatUnit(yearlyStats.maxStreak, "day")}`}
-            subtitle="Personal best"
+            title={t("profile.longestStreak")}
+            value={`${yearlyStats.maxStreak} ${formatUnit(yearlyStats.maxStreak, t("units.day"))}`}
+            subtitle={t("profile.personalBest")}
             iconName="flame"
             iconColor="#e34c26"
           />
 
           {/* Half Width: Busiest Day */}
           <StatCard
-            title="Busiest Day"
+            title={t("profile.busiestDay")}
             value={yearlyStats.busiestDay.date}
-            subtitle={yearlyStats.busiestDay.count > 0 ? `${yearlyStats.busiestDay.count} ${formatUnit(yearlyStats.busiestDay.count, "goal")} met` : 'No activity'}
+            subtitle={yearlyStats.busiestDay.count > 0 ? `${yearlyStats.busiestDay.count} ${t("profile.goalsMet")}` : t("profile.noActivity")}
             iconName="calendar"
             iconColor={color.text}
           />
 
           {/* Half Width: Top Habit */}
           <StatCard
-            title="Top Habit"
-            value={yearlyStats.topHabit ? yearlyStats.topHabit.name : "None"}
-            subtitle={yearlyStats.topHabit ? `${yearlyStats.topHabit.count} ${formatUnit(yearlyStats.topHabit.count, "commit")}` : "No data"}
+            title={t("profile.topHabit")}
+            value={yearlyStats.topHabit ? yearlyStats.topHabit.name : t("profile.none")}
+            subtitle={yearlyStats.topHabit ? `${yearlyStats.topHabit.count} ${formatUnit(yearlyStats.topHabit.count, t("units.commit"))}` : t("profile.noData")}
             iconName="repo"
             iconColor={yearlyStats.topHabit ? (yearlyStats.topHabit.color || color.primary) : color.muted}
           />
 
           {/* Half Width: Active Days / Completion Rate */}
           <StatCard
-            title="Active Days"
-            value={`${activeDays} ${formatUnit(activeDays, "day")}`}
-            subtitle={`${yearlyStats.completionRate}% of ${yearlyStats.daysPassed} days`}
+            title={t("profile.activeDays")}
+            value={`${activeDays} ${formatUnit(activeDays, t("units.day"))}`}
+            subtitle={t("profile.percentOfDays", { completionRate: yearlyStats.completionRate, daysPassed: yearlyStats.daysPassed })}
             iconName="check-circle"
             iconColor={color.primary}
           />

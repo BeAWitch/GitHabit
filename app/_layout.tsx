@@ -6,6 +6,7 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { initDB } from "@/db/database";
 
 import "../css/global.css";
+import "@/utils/i18n";
 
 export default function RootLayout() {
   const { theme } = useThemeStore();

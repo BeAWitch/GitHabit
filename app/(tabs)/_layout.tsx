@@ -2,9 +2,11 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { Octicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
 import { HeaderMenu } from "@/components/HeaderMenu";
+import { useTranslation } from "react-i18next";
 
 export default function TabLayout() {
   const { color } = useThemeColors();
+  const { t } = useTranslation();
 
   // Define GitHub palette colors for the tab bar
   const activeColor = color.active; // White in dark mode, dark grey in light mode
@@ -41,7 +43,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: "Home",
+          title: t('tabs.home'),
           tabBarIcon: ({ color, size }) => (
             <Octicons name="home" size={size} color={color} />
           ),
@@ -50,7 +52,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          title: "Habits",
+          title: t('tabs.habits'),
           tabBarIcon: ({ color, size }) => (
             <Octicons name="repo" size={size} color={color} />
           ),
@@ -59,7 +61,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: "Profile",
+          title: t('tabs.profile'),
           tabBarIcon: ({ color, size }) => (
             <Octicons name="person" size={size} color={color} />
           ),

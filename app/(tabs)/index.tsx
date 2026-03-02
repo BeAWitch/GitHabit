@@ -9,6 +9,7 @@ import { Link, useRouter } from "expo-router";
 import { useEffect, useMemo, useState } from "react";
 import { ScrollView, Text, TouchableOpacity, View } from "react-native";
 import type { Habit, TimelineActivity } from "@/types/models";
+import { useTranslation } from "react-i18next";
 
 type ActivityGroup = {
   id: string;
@@ -31,6 +32,7 @@ function CheckInGroupRenderer({
   isLast: boolean;
 }) {
   const { color } = useThemeColors();
+  const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
 
   const habitExists = habits.some((h) => h.id === group.habitId);
@@ -50,7 +52,7 @@ function CheckInGroupRenderer({
         className={`flex-1 ${!isLast ? "border-b border-github-lightBorder dark:border-github-darkBorder pb-3" : ""}`}
       >
         <Text className="text-sm text-github-lightText dark:text-github-darkText mb-2">
-          <Text className="font-semibold">You</Text> committed to{" "}
+          <Text className="font-semibold">{t('home.you')}</Text> {t('home.committedTo')}{" "}
           {habitExists ? (
             <Link
               href={`/habit/${group.habitId}`}
@@ -98,7 +100,7 @@ function CheckInGroupRenderer({
                 className="text-xs font-semibold"
                 style={{ color: color.link }}
               >
-                {hiddenCount} more commit{hiddenCount > 1 ? "s" : ""} »
+                {hiddenCount} {hiddenCount > 1 ? t('home.moreCommitsPlural') : t('home.moreCommits')} »
               </Text>
             </TouchableOpacity>
           )}
@@ -111,7 +113,7 @@ function CheckInGroupRenderer({
                 className="text-xs font-semibold"
                 style={{ color: color.link }}
               >
-                « Show less
+                {t('home.showLess')}
               </Text>
             </TouchableOpacity>
           )}
@@ -124,6 +126,7 @@ function CheckInGroupRenderer({
 export default function Home() {
   const { color } = useThemeColors();
   const router = useRouter();
+  const { t } = useTranslation();
 
   const { habits, recentActivities, habitContributions, fetchData, commitCheckIn, fetchHabitDetail } =
     useHabitStore();
@@ -180,20 +183,20 @@ export default function Home() {
       {/* Pinned Habits Section */}
       <View className="mb-6">
         <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Pinned
+          {t('home.pinned')}
         </Text>
 
         {pinnedHabits.length === 0 ? (
           <View className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-4 rounded-md items-center">
             <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-2">
-              No pinned habits yet.
+              {t('home.noPinned')}
             </Text>
             <TouchableOpacity
               onPress={() => router.push("/habits")}
               className="px-3 py-1.5 rounded-md border border-github-lightBorder dark:border-github-darkBorder"
             >
               <Text className="text-xs font-semibold text-github-lightText dark:text-github-darkText">
-                Create new
+                {t('home.createNew')}
               </Text>
             </TouchableOpacity>
           </View>
@@ -249,7 +252,7 @@ export default function Home() {
                       className="text-xs text-github-lightMuted dark:text-github-darkMuted mb-3 h-8"
                       numberOfLines={2}
                     >
-                      {habit.description || "No description"}
+                      {habit.description || t('habits.noDescription')}
                     </Text>
                   </View>
   
@@ -259,7 +262,7 @@ export default function Home() {
                     style={{ backgroundColor: color.primary }}
                     onPress={() => setCommitModalHabitId(habit.id)}
                   >
-                    <Text className="text-white text-xs font-bold">Commit</Text>
+                    <Text className="text-white text-xs font-bold">{t('habit.commit')}</Text>
                   </TouchableOpacity>
                 </View>
               );
@@ -271,13 +274,13 @@ export default function Home() {
       {/* Recent Activity (Timeline) */}
       <View>
         <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Recent Activity
+          {t('home.recentActivity')}
         </Text>
 
         {groupedActivities.length === 0 ? (
           <View className="p-4 border border-github-lightBorder dark:border-github-darkBorder rounded-md">
             <Text className="text-sm text-center text-github-lightMuted dark:text-github-darkMuted">
-              No recent activity. Time to get to work!
+              {t('home.noActivity')}
             </Text>
           </View>
         ) : (
@@ -294,7 +297,7 @@ export default function Home() {
                   </View>
                   <View className={`flex-1 ${!isLast ? "border-b border-github-lightBorder dark:border-github-darkBorder pb-3" : ""}`}>
                     <Text className="text-sm text-github-lightText dark:text-github-darkText">
-                      <Text className="font-semibold">You</Text> created a habit{" "}
+                      <Text className="font-semibold">{t('home.you')}</Text> {t('home.createdHabit')}{" "}
                       {habitExists ? (
                         <Link
                           href={`/habit/${activity.habitId}`}
@@ -327,7 +330,7 @@ export default function Home() {
                   </View>
                   <View className={`flex-1 ${!isLast ? "border-b border-github-lightBorder dark:border-github-darkBorder pb-3" : ""}`}>
                     <Text className="text-sm text-github-lightText dark:text-github-darkText">
-                      <Text className="font-semibold">You</Text> deleted the habit{" "}
+                      <Text className="font-semibold">{t('home.you')}</Text> {t('home.deletedHabit')}{" "}
                       <Text className="font-semibold line-through" style={{ color: color.muted }}>
                         {activity.habitName}
                       </Text>
@@ -357,14 +360,14 @@ export default function Home() {
       <CommitModal
         visible={Boolean(activeCommitHabit)}
         title={
-          activeCommitHabit ? `Commit to ${activeCommitHabit.name}` : "Commit"
+          activeCommitHabit ? `${t('home.commit')} to ${activeCommitHabit.name}` : t('home.commit')
         }
         unitLabel={activeCommitHabit?.unitLabel || "time"}
         unitType={activeCommitHabit?.unitType || "count"}
         onClose={() => setCommitModalHabitId(null)}
         onSubmit={(value, message) => {
           if (!activeCommitHabit) return;
-          commitCheckIn(activeCommitHabit.id, message || "Quick commit", value);
+          commitCheckIn(activeCommitHabit.id, message || t('habit.quickCommit'), value);
         }}
       />
     </ScrollView>

@@ -2,6 +2,7 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { getDaysInYear } from "@/utils/dateUtil";
 import React, { useMemo, useRef } from "react";
 import { ScrollView, Text, View } from "react-native";
+import { useTranslation } from "react-i18next";
 
 interface ContributionGraphProps {
   contributions: Record<string, number>;
@@ -19,6 +20,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
   targetValues,
 }) => {
   const { color } = useThemeColors();
+  const { t, i18n } = useTranslation();
   const scrollViewRef = useRef<ScrollView>(null);
 
   // Generate heatmap data grouped by columns (weeks)
@@ -76,8 +78,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
       const firstValidDay = colDays.find((d) => d.count !== -1);
       if (firstValidDay) {
         const d = new Date(firstValidDay.dateString);
-        // Force English month abbreviations
-        const monthName = d.toLocaleString("en-US", { month: "short" });
+        const monthName = d.toLocaleString(i18n.language === 'zh' ? 'zh-CN' : 'en-US', { month: "short" });
 
         // If it's the first column
         if (cols.length === 1) {
@@ -96,7 +97,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
     }
 
     return { columns: cols, months, maxCount: currentMax };
-  }, [contributions, days, endDate, targetValues]);
+  }, [contributions, days, endDate, targetValues, i18n.language]);
 
   return (
     <View className="bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md p-3">
@@ -209,11 +210,11 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
       </ScrollView>
       <View className="flex-row justify-between items-center mt-2">
         <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-          {days} days
+          {days} {t("graph.days")}
         </Text>
         <View className="flex-row items-center">
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mr-1">
-            Less
+            {t("graph.less")}
           </Text>
           <View className="flex-row">
             {color.heatmap.map((c, i) => (
@@ -225,7 +226,7 @@ export const ContributionGraph: React.FC<ContributionGraphProps> = ({
             ))}
           </View>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted ml-1">
-            More
+            {t("graph.more")}
           </Text>
         </View>
       </View>

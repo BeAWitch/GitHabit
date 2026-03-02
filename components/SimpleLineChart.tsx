@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import { View, Text, LayoutChangeEvent } from 'react-native';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useTranslation } from "react-i18next";
 
 export interface LineChartDataPoint {
   date: string;
@@ -23,6 +24,7 @@ export function SimpleLineChart({
   targetValue,
 }: SimpleLineChartProps) {
   const theme = useThemeColors();
+  const { t } = useTranslation();
   const chartColor = color || theme.color.primary;
   
   const [containerWidth, setContainerWidth] = useState(0);
@@ -170,7 +172,7 @@ export function SimpleLineChart({
         style={{ height }}
       >
         <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted">
-          No activity in this period
+          {t("chart.noActivity")}
         </Text>
       </View>
     );

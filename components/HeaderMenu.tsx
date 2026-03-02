@@ -3,11 +3,13 @@ import { View, TouchableOpacity, Modal, Text, Pressable } from 'react-native';
 import { Octicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useThemeColors } from '@/hooks/useThemeColors';
+import { useTranslation } from 'react-i18next';
 
 export const HeaderMenu = () => {
   const [visible, setVisible] = useState(false);
   const router = useRouter();
   const { color } = useThemeColors();
+  const { t } = useTranslation();
 
   const handleNavigate = (path: any) => {
     setVisible(false);
@@ -34,7 +36,7 @@ export const HeaderMenu = () => {
             >
               <Octicons name="gear" size={16} color={color.text} className="mr-3" />
               <Text className="text-github-lightText dark:text-github-darkText font-medium text-base ml-2">
-                Settings
+                {t('tabs.settings')}
               </Text>
             </TouchableOpacity>
           </View>

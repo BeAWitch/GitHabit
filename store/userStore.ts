@@ -6,6 +6,7 @@ export interface UserProfile {
   username: string;
   bio: string;
   status: string;
+  statusEmoji?: string;
   avatarUri: string | null;
 }
 
@@ -18,6 +19,7 @@ const DEFAULT_PROFILE: UserProfile = {
   username: 'habit-builder',
   bio: '',
   status: 'Building habits...',
+  statusEmoji: undefined,
   avatarUri: null, // null means use default local icon
 };
 

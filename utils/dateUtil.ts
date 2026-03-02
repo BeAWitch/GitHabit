@@ -1,4 +1,5 @@
 import { formatUnit } from "./unitFormatterUtil";
+import { useTranslation } from "react-i18next";
 
 export const formatRelativeTime = (timestamp: number | null): string => {
   if (!timestamp) {
@@ -10,11 +11,13 @@ export const formatRelativeTime = (timestamp: number | null): string => {
   const hours = Math.floor(diffMs / 3600000);
   const days = Math.floor(diffMs / 86400000);
 
-  if (minutes < 1) return "Just now";
-  if (minutes < 60) return `${minutes} ${formatUnit(hours, "minute")} ago`;
-  if (hours < 24) return `${hours} ${formatUnit(hours, "hour")} ago`;
-  if (days === 1) return "Yesterday";
-  return `${days} days ago`;
+  const { t } = useTranslation();
+
+  if (minutes < 1) return t("time.justNow");
+  if (minutes < 60) return `${minutes} ${formatUnit(hours, t("time.minute"))} ${t("time.ago")}`;
+  if (hours < 24) return `${hours} ${formatUnit(hours, t("time.hour"))} ${t("time.ago")}`;
+  if (days === 1) return t("time.yesterday");
+  return `${days} ${formatUnit(days, t("time.day"))} ${t("time.ago")}`;
 };
 
 export const getDaysInYear = (year: number = new Date().getFullYear()): number => {

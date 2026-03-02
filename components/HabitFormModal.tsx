@@ -17,6 +17,7 @@ import { useThemeColors } from "@/hooks/useThemeColors";
 import { getMarkdownStyle } from "@/utils/markdownStyle";
 import { useHabitStore } from "@/store/habitStore";
 import { SegmentedControl } from "@/components/SegmentedControl";
+import { useTranslation } from "react-i18next";
 
 interface HabitFormModalProps {
   visible: boolean;
@@ -31,6 +32,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 }) => {
   const { color } = useThemeColors();
   const { categories, habits, addHabit, updateHabit } = useHabitStore();
+  const { t } = useTranslation();
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -151,7 +153,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
           <View className="bg-github-lightBg dark:bg-github-darkBg rounded-lg border border-github-lightBorder dark:border-github-darkBorder max-h-[80%]">
             <View className="flex-row items-center justify-between p-4 border-b border-github-lightBorder dark:border-github-darkBorder">
               <Text className="text-lg font-semibold text-github-lightText dark:text-github-darkText">
-                {habitId ? "Edit habit" : "Create a new habit"}
+                {habitId ? t("habitForm.editTitle") : t("habitForm.createTitle")}
               </Text>
               <TouchableOpacity onPress={onClose}>
                 <Octicons name="x" size={20} color={color.muted} />
@@ -160,22 +162,22 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
             <ScrollView className="p-4" keyboardShouldPersistTaps="handled">
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Habit name <Text className="text-red-500">*</Text>
+              {t("habitForm.nameLabel")} <Text className="text-red-500">*</Text>
             </Text>
             <TextInput
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
-              placeholder="e.g. read-books, exercise"
+              placeholder={t("habitForm.namePlaceholder")}
               placeholderTextColor={color.muted}
               value={name}
               onChangeText={setName}
             />
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Description (optional)
+              {t("habitForm.descLabel")}
             </Text>
             <TextInput
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
-              placeholder="What is this habit about?"
+              placeholder={t("habitForm.descPlaceholder")}
               placeholderTextColor={color.muted}
               value={description}
               onChangeText={setDescription}
@@ -183,7 +185,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
             <View className="flex-row items-center justify-between mb-1">
               <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
-                Detailed Plan (optional)
+                {t("habitForm.planLabel")}
               </Text>
               <View className="flex-row items-center">
                 <TouchableOpacity
@@ -196,7 +198,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                   }`}
                 >
                   <Text className="text-xs text-github-lightText dark:text-github-darkText">
-                    Edit
+                    {t("habitForm.edit")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -209,7 +211,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                   }`}
                 >
                   <Text className="text-xs text-github-lightText dark:text-github-darkText">
-                    Preview
+                    {t("habitForm.preview")}
                   </Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -227,7 +229,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               {readmeViewMode !== "preview" && (
                 <TextInput
                   className="px-3 py-2 text-github-lightText dark:text-github-darkText flex-1"
-                  placeholder="# Goal\nWrite down your rules..."
+                  placeholder={t("habitForm.planPlaceholder").replace("\\n", "\n")}
                   placeholderTextColor={color.muted}
                   multiline
                   textAlignVertical="top"
@@ -241,7 +243,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                     <Markdown style={markdownStyle}>{plan}</Markdown>
                   ) : (
                     <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted">
-                      Markdown preview will appear here.
+                      {t("habitForm.markdownPreview")}
                     </Text>
                   )}
                 </ScrollView>
@@ -257,12 +259,12 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             <View className="flex-row mb-4">
               <View className="flex-1 mr-2">
                 <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-                  Unit Type
+                  {t("habitForm.unitType")}
                 </Text>
                 <SegmentedControl
                   options={[
-                    { label: "Count", value: "count" },
-                    { label: "Binary", value: "binary" },
+                    { label: t("habitForm.count"), value: "count" },
+                    { label: t("habitForm.binary"), value: "binary" },
                   ]}
                   value={unitType}
                   onChange={(nextValue) => setUnitType(nextValue as "count" | "binary")}
@@ -270,11 +272,11 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               </View>
               <View className="flex-1 ml-2">
                 <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-                  Unit Label
+                  {t("habitForm.unitLabel")}
                 </Text>
                 <TextInput
                   className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
-                  placeholder={unitType === "count" ? "e.g. times" : "e.g. done"}
+                  placeholder={unitType === "count" ? t("habitForm.unitPlaceholderCount") : t("habitForm.unitPlaceholderBinary")}
                   placeholderTextColor={color.muted}
                   value={unitLabel}
                   onChangeText={setUnitLabel}
@@ -284,7 +286,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
 
             <View className="mb-4">
               <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-                Daily Target <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">(Goal per day)</Text>
+                {t("habitForm.dailyTarget")} <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">{t("habitForm.goalPerDay")}</Text>
               </Text>
               <TextInput
                 className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
@@ -297,7 +299,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             </View>
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Category
+              {t("habitForm.category")}
             </Text>
             <View className="flex-row flex-wrap gap-2 mb-6">
               {categories.map((c) => (
@@ -324,12 +326,12 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             <View className="flex-row mb-6">
               <View className="flex-1 mr-2">
                 <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-                  Status
+                  {t("habitForm.status")}
                 </Text>
                 <SegmentedControl
                   options={[
-                    { label: "Active", value: "active" },
-                    { label: "Archived", value: "archived" },
+                    { label: t("habits.active"), value: "active" },
+                    { label: t("habits.archived"), value: "archived" },
                   ]}
                   value={status}
                   onChange={(nextValue) => setStatus(nextValue as "active" | "archived")}
@@ -337,12 +339,12 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               </View>
               <View className="flex-1 ml-2">
                 <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-                  Pinned
+                  {t("habitForm.pinned")}
                 </Text>
                 <SegmentedControl
                   options={[
-                    { label: "Yes", value: "yes" },
-                    { label: "No", value: "no" },
+                    { label: t("habitForm.yes"), value: "yes" },
+                    { label: t("habitForm.no"), value: "no" },
                   ]}
                   value={pinned ? "yes" : "no"}
                   onChange={(nextValue) => setPinned(nextValue === "yes")}
@@ -357,7 +359,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               onPress={onClose}
             >
               <Text className="font-semibold text-github-lightText dark:text-github-darkText">
-                Cancel
+                {t("habitForm.cancel")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -369,7 +371,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
               onPress={handleSubmit}
             >
               <Text className="font-bold text-white">
-                {habitId ? "Save changes" : "Create habit"}
+                {habitId ? t("habitForm.saveChanges") : t("habitForm.createHabit")}
               </Text>
             </TouchableOpacity>
           </View>
@@ -384,7 +386,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
         <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg">
           <View className="flex-row items-center justify-between px-4 py-4 border-b border-github-lightBorder dark:border-github-darkBorder">
             <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
-              README
+              {t("habit.readme")}
             </Text>
             <TouchableOpacity
               onPress={() => setIsReadmeFullScreen(false)}
@@ -397,7 +399,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
             {readmeViewMode === "edit" ? (
               <TextInput
                 className="flex-1 text-github-lightText dark:text-github-darkText"
-                placeholder="# Goal\nWrite down your rules..."
+                placeholder={t("habitForm.planPlaceholder").replace("\\n", "\n")}
                 placeholderTextColor={color.muted}
                 multiline
                 textAlignVertical="top"
@@ -410,7 +412,7 @@ export const HabitFormModal: React.FC<HabitFormModalProps> = ({
                   <Markdown style={markdownStyle}>{plan}</Markdown>
                 ) : (
                   <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted">
-                    Markdown preview will appear here.
+                    {t("habitForm.markdownPreview")}
                   </Text>
                 )}
               </ScrollView>

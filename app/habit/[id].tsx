@@ -29,11 +29,13 @@ import { formatUnit } from "@/utils/unitFormatterUtil";
 import type { CheckIn } from "@/types/models";
 import { useYearFilter } from "@/hooks/useYearFilter";
 import { YearPicker } from "@/components/YearPicker";
+import { useTranslation } from "react-i18next";
 
 export default function HabitDetail() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { color } = useThemeColors();
+  const { t } = useTranslation();
 
   const habitId = Number(id);
 
@@ -163,14 +165,14 @@ export default function HabitDetail() {
     return (
       <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4 justify-center items-center">
         <Text className="text-github-lightText dark:text-github-darkText">
-          Loading habit details...
+          {t("habit.loading")}
         </Text>
         <TouchableOpacity
           className="mt-4 px-4 py-2 bg-github-lightBorder dark:bg-github-darkBorder rounded-md"
           onPress={() => router.back()}
         >
           <Text className="text-github-lightText dark:text-github-darkText">
-            Go Back
+            {t("habit.goBack")}
           </Text>
         </TouchableOpacity>
       </View>
@@ -220,12 +222,12 @@ export default function HabitDetail() {
 
   const handleDelete = () => {
     Alert.alert(
-      "Delete Habit",
-      `Are you sure you want to delete ${habit.name}? This will also delete all commit history. This action cannot be undone.`,
+      t("habit.deleteConfirmTitle"),
+      t("habit.deleteConfirmDescName", { name: habit.name }).replace("{{name}}", habit.name),
       [
-        { text: "Cancel", style: "cancel" },
+        { text: t("habit.cancel"), style: "cancel" },
         {
-          text: "Delete",
+          text: t("habit.delete"),
           style: "destructive",
           onPress: () => {
             removeHabit(habitId);
@@ -271,7 +273,7 @@ export default function HabitDetail() {
         >
           <Octicons name="chevron-left" size={18} color={color.text} />
           <Text className="text-xl font-semibold text-github-lightText dark:text-github-darkText ml-1">
-            Detail
+            {t("habit.detail")}
           </Text>
         </TouchableOpacity>
         <View className="flex-row items-center mt-4 space-x-4">
@@ -292,7 +294,7 @@ export default function HabitDetail() {
         <View className="flex-row items-start justify-between">
           <View className="flex-1 mr-4">
             <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-              Habit
+              {t("habit.habitLabel")}
             </Text>
             <View className="flex-row items-center mt-1 mb-2">
               <Text className="text-2xl font-bold text-github-lightText dark:text-github-darkText flex-1">
@@ -312,7 +314,7 @@ export default function HabitDetail() {
                 </View>
               )}
               <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-1">
-                {habit.description || "No description provided."}
+                {habit.description || t("habit.noDescription")}
               </Text>
             </View>
           </View>
@@ -325,7 +327,7 @@ export default function HabitDetail() {
                 size={40}
               />
               <Text className="text-[10px] text-github-lightMuted dark:text-github-darkMuted mt-1">
-                Today&apos;s Goal
+                {t("habit.todaysGoal")}
               </Text>
             </View>
 
@@ -335,7 +337,7 @@ export default function HabitDetail() {
               onPress={() => setIsCommitModalVisible(true)}
             >
               <Octicons name="git-commit" size={14} color="white" />
-              <Text className="text-white font-semibold ml-2">Commit</Text>
+              <Text className="text-white font-semibold ml-2">{t("habit.commit")}</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -348,7 +350,7 @@ export default function HabitDetail() {
       >
         <View className="flex-row items-center justify-between p-4 border-b border-github-lightBorder dark:border-github-darkBorder">
           <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">
-            README
+            {t("habit.readme")}
           </Text>
           <TouchableOpacity
             onPress={() => setIsReadmeFullScreen(true)}
@@ -362,7 +364,7 @@ export default function HabitDetail() {
             <Markdown style={markdownStyle}>{habit.plan}</Markdown>
           ) : (
             <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
-              No plan defined yet. Start by setting a goal!
+              {t("habit.noPlan")}
             </Text>
           )}
         </ScrollView>
@@ -381,7 +383,7 @@ export default function HabitDetail() {
             {totalCommits}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-            {formatUnit(totalCommits, "commits")}
+            {formatUnit(totalCommits, t("units.commit"))}
           </Text>
         </View>
         <View className="mr-6">
@@ -397,7 +399,7 @@ export default function HabitDetail() {
             {goalsAchieved}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-            goals met
+            {t("habit.goalsMet")}
           </Text>
         </View>
         <View>
@@ -405,7 +407,7 @@ export default function HabitDetail() {
             {currentStreak}
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-            streak
+            {t("habit.streak")}
           </Text>
         </View>
       </View>
@@ -414,7 +416,7 @@ export default function HabitDetail() {
       <View className="mb-6">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
-            Contribution activity
+            {t("habit.contributionActivity")}
           </Text>
           <YearPicker
             selectedYear={selectedYear}
@@ -434,7 +436,7 @@ export default function HabitDetail() {
       {/* Daily changes chart */}
       <View className="mb-6">
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Daily frequency
+          {t("habit.dailyFrequency")}
         </Text>
         <SimpleLineChart
           data={last30DaysData}
@@ -447,13 +449,13 @@ export default function HabitDetail() {
       {/* Recent commits */}
       <View className="mb-8">
         <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText mb-3">
-          Recent commits
+          {t("habit.recentCommits")}
         </Text>
         <View className="border border-github-lightBorder dark:border-github-darkBorder rounded-md bg-github-lightCanvas dark:bg-github-darkCanvas">
           {recentCheckIns.length === 0 ? (
             <View className="px-4 py-4">
               <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted text-center">
-                No commits yet. Time to start your first streak!
+                {t("habit.noCommitsYet")}
               </Text>
             </View>
           ) : (
@@ -471,7 +473,7 @@ export default function HabitDetail() {
               >
                 <View className="flex-row justify-between items-start mb-1">
                   <Text className="text-sm text-github-lightText dark:text-github-darkText flex-1 mr-2">
-                    {checkIn.message || "Completed habit session"}
+                    {checkIn.message || t("habit.completedSession")}
                   </Text>
                   <Text className="text-xs font-semibold text-github-lightSuccess dark:text-github-darkSuccess">
                     +{checkIn.value} {formatUnit(checkIn.value, habit.unitLabel)}
@@ -496,7 +498,7 @@ export default function HabitDetail() {
       />
       <CommitModal
         visible={isCommitModalVisible}
-        title={editingCheckIn ? "Edit Commit" : `Commit to ${habit.name}`}
+        title={editingCheckIn ? t("habit.editCommit") : `${t("habit.commitTo")}${habit.name}`}
         unitLabel={habit.unitLabel}
         unitType={habit.unitType}
         initialMessage={editingCheckIn?.message || ""}
@@ -509,7 +511,7 @@ export default function HabitDetail() {
           if (editingCheckIn) {
             updateCheckIn(habitId, editingCheckIn.id, message, value);
           } else {
-            commitCheckIn(habitId, message || "Quick commit", value);
+            commitCheckIn(habitId, message || t("habit.quickCommit"), value);
           }
           setEditingCheckIn(null);
         }}
@@ -522,7 +524,7 @@ export default function HabitDetail() {
         <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg">
           <View className="flex-row items-center justify-between px-4 py-4 border-b border-github-lightBorder dark:border-github-darkBorder">
             <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
-              README
+              {t("habit.readme")}
             </Text>
             <TouchableOpacity
               onPress={() => setIsReadmeFullScreen(false)}
@@ -536,7 +538,7 @@ export default function HabitDetail() {
               <Markdown style={markdownStyle}>{habit.plan}</Markdown>
             ) : (
               <Text className="text-sm text-github-lightText dark:text-github-darkText leading-5">
-                No plan defined yet. Start by setting a goal!
+                {t("habit.noPlan")}
               </Text>
             )}
           </ScrollView>
@@ -582,7 +584,7 @@ export default function HabitDetail() {
                   className="mr-3"
                 />
                 <Text className="text-sm text-github-lightText dark:text-github-darkText ml-2">
-                  Edit
+                  {t("habit.edit")}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -590,12 +592,12 @@ export default function HabitDetail() {
                 onPress={() => {
                   setActiveCheckInId(null);
                   Alert.alert(
-                    "Delete Commit",
-                    "Are you sure you want to delete this commit?",
+                    t("habit.deleteCommitTitle"),
+                    t("habit.deleteCommitDesc"),
                     [
-                      { text: "Cancel", style: "cancel" },
+                      { text: t("habit.cancel"), style: "cancel" },
                       {
-                        text: "Delete",
+                        text: t("habit.delete"),
                         style: "destructive",
                         onPress: () => removeCheckIn(habitId, activeCheckIn.id),
                       },
@@ -610,7 +612,7 @@ export default function HabitDetail() {
                   className="mr-3"
                 />
                 <Text className="text-sm text-github-lightDanger dark:text-github-darkDanger ml-2">
-                  Delete
+                  {t("habit.delete")}
                 </Text>
               </TouchableOpacity>
             </View>

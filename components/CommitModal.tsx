@@ -12,6 +12,8 @@ import {
 import { Octicons } from "@expo/vector-icons";
 
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { useTranslation } from "react-i18next";
+import { formatUnit } from "@/utils/unitFormatterUtil";
 
 interface CommitModalProps {
   visible: boolean;
@@ -35,6 +37,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
   onSubmit,
 }) => {
   const { color } = useThemeColors();
+  const { t } = useTranslation();
   const [valueInput, setValueInput] = useState(initialValue.toString());
   const [message, setMessage] = useState(initialMessage);
 
@@ -51,7 +54,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
   }, [valueInput]);
 
   const isValid = parsedValue > 0;
-  const valueLabel = unitType === "binary" ? "Times" : unitLabel || "times";
+  const valueLabel = unitType === "binary" ? formatUnit(2, t("units.time")) : unitLabel || formatUnit(2, t("units.time"));
 
   return (
     <Modal
@@ -76,7 +79,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
 
           <View className="p-4">
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Count ({valueLabel})
+              {t("commitModal.valueLabel")} ({valueLabel})
             </Text>
             <TextInput
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
@@ -88,11 +91,11 @@ export const CommitModal: React.FC<CommitModalProps> = ({
             />
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Message (optional)
+              {t("commitModal.messageLabel")} <Text className="text-github-lightMuted dark:text-github-darkMuted font-normal">{t("commitModal.optional")}</Text>
             </Text>
             <TextInput
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
-              placeholder="What did you do?"
+              placeholder={t("commitModal.messagePlaceholder")}
               placeholderTextColor={color.muted}
               value={message}
               onChangeText={setMessage}
@@ -105,7 +108,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
               onPress={onClose}
             >
               <Text className="font-semibold text-github-lightText dark:text-github-darkText">
-                Cancel
+                {t("commitModal.cancel")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -117,7 +120,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
                 onClose();
               }}
             >
-              <Text className="font-bold text-white">Commit</Text>
+              <Text className="font-bold text-white">{initialMessage ? t("commitModal.editCommit") : t("commitModal.commit")}</Text>
             </TouchableOpacity>
           </View>
         </View>

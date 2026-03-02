@@ -14,6 +14,7 @@ import { Octicons } from "@expo/vector-icons";
 import * as ImagePicker from 'expo-image-picker';
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { UserProfile } from "@/store/userStore";
+import { useTranslation } from "react-i18next";
 
 interface EditProfileModalProps {
   visible: boolean;
@@ -29,9 +30,11 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
   onSubmit,
 }) => {
   const { color } = useThemeColors();
+  const { t } = useTranslation();
   const [username, setUsername] = useState(initialProfile.username);
   const [bio, setBio] = useState(initialProfile.bio);
   const [status, setStatus] = useState(initialProfile.status);
+  const [statusEmoji, setStatusEmoji] = useState(initialProfile.statusEmoji || "");
   const [avatarUri, setAvatarUri] = useState<string | null>(initialProfile.avatarUri);
 
   useEffect(() => {
@@ -39,6 +42,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       setUsername(initialProfile.username);
       setBio(initialProfile.bio);
       setStatus(initialProfile.status);
+      setStatusEmoji(initialProfile.statusEmoji || "");
       setAvatarUri(initialProfile.avatarUri);
     }
   }, [visible, initialProfile]);
@@ -48,7 +52,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
     const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
     
     if (permissionResult.granted === false) {
-      Alert.alert("Permission Required", "You need to allow access to your photos to upload a profile picture.");
+      Alert.alert(t("profile.permissionRequired"), t("profile.permissionDesc"));
       return;
     }
 
@@ -68,6 +72,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
       username: username.trim() || initialProfile.username,
       bio: bio.trim(),
       status: status.trim(),
+      statusEmoji: statusEmoji.trim(),
       avatarUri,
     });
     onClose();
@@ -91,7 +96,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
         <View className="bg-github-lightBg dark:bg-github-darkBg rounded-lg border border-github-lightBorder dark:border-github-darkBorder max-h-[90%]">
           <View className="flex-row items-center justify-between p-4 border-b border-github-lightBorder dark:border-github-darkBorder">
             <Text className="text-lg font-semibold text-github-lightText dark:text-github-darkText">
-              Edit profile
+              {t("profile.editProfile")}
             </Text>
             <TouchableOpacity onPress={onClose}>
               <Octicons name="x" size={20} color={color.muted} />
@@ -110,33 +115,33 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
                     className="mb-2 bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-3 py-1.5 rounded-md"
                     onPress={pickImage}
                   >
-                    <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">Change photo</Text>
+                    <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText">{t("profile.changePhoto")}</Text>
                   </TouchableOpacity>
                   {avatarUri && (
                     <TouchableOpacity onPress={handleRemovePhoto}>
-                      <Text className="text-sm text-github-danger dark:text-github-danger">Remove photo</Text>
+                      <Text className="text-sm text-github-danger dark:text-github-danger">{t("profile.removePhoto")}</Text>
                     </TouchableOpacity>
                   )}
                 </View>
              </View>
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Username
+              {t("profile.username")}
             </Text>
             <TextInput
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
-              placeholder="e.g. monalisa"
+              placeholder={t("profile.usernamePlaceholder")}
               placeholderTextColor={color.muted}
               value={username}
               onChangeText={setUsername}
             />
             
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Bio
+              {t("profile.bio")}
             </Text>
             <TextInput
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mb-4"
-              placeholder="A little bit about yourself"
+              placeholder={t("profile.bioPlaceholder")}
               placeholderTextColor={color.muted}
               multiline
               numberOfLines={3}
@@ -146,15 +151,25 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
 
             <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mb-1">
-              Status
+              {t("profile.status")}
             </Text>
-            <TextInput
-              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
-              placeholder="What's happening?"
-              placeholderTextColor={color.muted}
-              value={status}
-              onChangeText={setStatus}
-            />
+            <View className="flex-row">
+              <TextInput
+                className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText mr-2 w-12 text-center"
+                placeholder="😀"
+                placeholderTextColor={`${color.text}66`}
+                value={statusEmoji}
+                onChangeText={setStatusEmoji}
+                maxLength={2}
+              />
+              <TextInput
+                className="flex-1 bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-2 text-github-lightText dark:text-github-darkText"
+                placeholder={t("profile.statusPlaceholder")}
+                placeholderTextColor={color.muted}
+                value={status}
+                onChangeText={setStatus}
+              />
+            </View>
           </View>
 
           <View className="p-4 border-t border-github-lightBorder dark:border-github-darkBorder flex-row justify-end">
@@ -163,7 +178,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               onPress={onClose}
             >
               <Text className="font-semibold text-github-lightText dark:text-github-darkText">
-                Cancel
+                {t("profile.cancel")}
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -171,7 +186,7 @@ export const EditProfileModal: React.FC<EditProfileModalProps> = ({
               style={{ backgroundColor: color.primary }}
               onPress={handleSave}
             >
-              <Text className="font-bold text-white">Save</Text>
+              <Text className="font-bold text-white">{t("profile.save")}</Text>
             </TouchableOpacity>
           </View>
         </View>

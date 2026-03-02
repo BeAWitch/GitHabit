@@ -11,45 +11,47 @@ import {
 
 import { Octicons } from "@expo/vector-icons";
 import { Link, router } from "expo-router";
+import { useTranslation } from "react-i18next";
 
 import { HabitFormModal } from "@/components/HabitFormModal";
 import { GoalProgressRing } from "@/components/GoalProgressRing";
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { useHabitStore } from "@/store/habitStore";
 import { formatRelativeTime } from "@/utils/dateUtil";
-const TYPE_FILTERS = [
-  { label: "All", value: "all" },
-  { label: "Active", value: "active" },
-  { label: "Archived", value: "archived" },
-] as const;
-
-const SORT_OPTIONS = [
-  { label: "Last updated", value: "lastUpdated" },
-  { label: "Newest", value: "newest" },
-  { label: "Oldest", value: "oldest" },
-  { label: "Name", value: "name" },
-] as const;
-
-const COMPLETION_FILTERS = [
-  { label: "All", value: "all" },
-  { label: "Completed", value: "completed" },
-  { label: "Incomplete", value: "incomplete" },
-] as const;
-
 export default function Habits() {
   const { color } = useThemeColors();
+  const { t } = useTranslation();
   const { habits, habitStats, categories, checkIns, fetchData, fetchHabitDetail, updateHabit } =
     useHabitStore();
+
+  const TYPE_FILTERS = useMemo(() => [
+    { label: t('habits.all'), value: "all" },
+    { label: t('habits.active'), value: "active" },
+    { label: t('habits.archived'), value: "archived" },
+  ], [t]);
+
+  const SORT_OPTIONS = useMemo(() => [
+    { label: t('habits.lastUpdated'), value: "lastUpdated" },
+    { label: t('habits.newest'), value: "newest" },
+    { label: t('habits.oldest'), value: "oldest" },
+    { label: t('habits.name'), value: "name" },
+  ], [t]);
+
+  const COMPLETION_FILTERS = useMemo(() => [
+    { label: t('habits.all'), value: "all" },
+    { label: t('habits.completed'), value: "completed" },
+    { label: t('habits.incomplete'), value: "incomplete" },
+  ], [t]);
 
   const [isModalVisible, setModalVisible] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] =
-    useState<(typeof TYPE_FILTERS)[number]["value"]>("all");
+    useState<"all" | "active" | "archived">("all");
   const [sortOption, setSortOption] =
-    useState<(typeof SORT_OPTIONS)[number]["value"]>("lastUpdated");
+    useState<"lastUpdated" | "newest" | "oldest" | "name">("lastUpdated");
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
   const [completionFilter, setCompletionFilter] =
-    useState<(typeof COMPLETION_FILTERS)[number]["value"]>("all");
+    useState<"all" | "completed" | "incomplete">("all");
   const [activeMenu, setActiveMenu] = useState<
     "type" | "sort" | "category" | "completion" | null
   >(null);
@@ -184,13 +186,13 @@ export default function Habits() {
 
   const categoryOptions = useMemo(
     () => [
-      { label: "All", value: "all" },
+      { label: t('habits.all'), value: "all" },
       ...categories.map((category) => ({
         label: category.name,
         value: String(category.id),
       })),
     ],
-    [categories],
+    [categories, t],
   );
 
   const activeMenuOptions =
@@ -226,7 +228,7 @@ export default function Habits() {
         <View className="flex-1 bg-github-lightCanvas dark:bg-github-darkCanvas flex-row items-center border border-github-lightBorder dark:border-github-darkBorder rounded-md px-3 py-0 mr-3">
           <TextInput
             className="flex-1 text-github-lightText dark:text-github-darkText ml-2"
-            placeholder="Find a habit..."
+            placeholder={t('habits.findHabit')}
             placeholderTextColor={color.muted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -242,7 +244,7 @@ export default function Habits() {
           onPress={() => setModalVisible(true)}
         >
           <Octicons name="repo" size={16} color="white" className="mr-2" />
-          <Text className="text-white font-bold ml-1">New</Text>
+          <Text className="text-white font-bold ml-1">{t('habits.new')}</Text>
         </TouchableOpacity>
       </View>
 
@@ -255,7 +257,7 @@ export default function Habits() {
               onPress={() => openMenu("type", typeButtonRef)}
             >
               <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                Type:{" "}
+                {t('habits.type')}{" "}
                 {
                   TYPE_FILTERS.find((option) => option.value === typeFilter)
                     ?.label
@@ -270,7 +272,7 @@ export default function Habits() {
               onPress={() => openMenu("sort", sortButtonRef)}
             >
               <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                Sort:{" "}
+                {t('habits.sort')}{" "}
                 {
                   SORT_OPTIONS.find((option) => option.value === sortOption)
                     ?.label
@@ -289,12 +291,12 @@ export default function Habits() {
               onPress={() => openMenu("category", categoryButtonRef)}
             >
               <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                Category:{" "}
+                {t('habits.category')}{" "}
                 {categoryFilter === null
-                  ? "All"
+                  ? t('habits.all')
                   : categories.find(
                       (category) => category.id === categoryFilter,
-                    )?.name || "All"}
+                    )?.name || t('habits.all')}
               </Text>
               <Octicons name="triangle-down" size={14} color={color.text} />
             </TouchableOpacity>
@@ -309,7 +311,7 @@ export default function Habits() {
               onPress={() => openMenu("completion", completionButtonRef)}
             >
               <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                Today:{" "}
+                {t('habits.today')}{" "}
                 {
                   COMPLETION_FILTERS.find(
                     (option) => option.value === completionFilter,
@@ -327,7 +329,7 @@ export default function Habits() {
         {filteredHabits.length === 0 ? (
           <View className="border border-github-lightBorder dark:border-github-darkBorder rounded-md p-4">
             <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted">
-              No habits found.
+              {t('habits.noHabitsFound')}
             </Text>
           </View>
         ) : (
@@ -365,7 +367,7 @@ export default function Habits() {
                     </Link>
                   </View>
                   <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-3">
-                    {habit.description || "No description"}
+                    {habit.description || t('habits.noDescription')}
                   </Text>
                   <View className="flex-row items-center">
                     <View
@@ -373,10 +375,10 @@ export default function Habits() {
                       style={{ backgroundColor: habit.color || color.primary }}
                     />
                     <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mr-4">
-                      {habit.categoryName || "Default"}
+                      {habit.categoryName || t('habits.defaultCategory')}
                     </Text>
                     <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-                      Updated {formatRelativeTime(lastUpdated)}
+                      {t('habits.updated')} {formatRelativeTime(lastUpdated)}
                     </Text>
                   </View>
                 </View>
@@ -449,15 +451,15 @@ export default function Habits() {
                   onPress={() => {
                     if (activeMenu === "type") {
                       setTypeFilter(
-                        option.value as (typeof TYPE_FILTERS)[number]["value"],
+                        option.value as "all" | "active" | "archived",
                       );
                     } else if (activeMenu === "sort") {
                       setSortOption(
-                        option.value as (typeof SORT_OPTIONS)[number]["value"],
+                        option.value as "lastUpdated" | "newest" | "oldest" | "name",
                       );
                     } else if (activeMenu === "completion") {
                       setCompletionFilter(
-                        option.value as (typeof COMPLETION_FILTERS)[number]["value"],
+                        option.value as "all" | "completed" | "incomplete",
                       );
                     } else {
                       setCategoryFilter(
@@ -531,7 +533,7 @@ export default function Habits() {
                   style={{ opacity: activeHabit.pinned ? 0.5 : 1 }}
                 />
                 <Text className="text-sm text-github-lightText dark:text-github-darkText ml-2">
-                  {activeHabit.pinned ? "Unpin" : "Pin to top"}
+                  {activeHabit.pinned ? t('habits.unpin') : t('habits.pinToTop')}
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -549,7 +551,7 @@ export default function Habits() {
                   className="mr-3"
                 />
                 <Text className="text-sm text-github-lightText dark:text-github-darkText ml-2">
-                  View details
+                  {t('habits.viewDetails')}
                 </Text>
               </TouchableOpacity>
             </View>
