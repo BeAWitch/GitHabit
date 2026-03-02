@@ -360,14 +360,18 @@ export default function Habits() {
                         </Text>
                         {habit.pinned === 1 && (
                           <View className="ml-2">
-                            <Octicons name="pin" size={14} color={color.muted} />
+                            <Octicons
+                              name="pin"
+                              size={14}
+                              color={color.muted}
+                            />
                           </View>
                         )}
                       </TouchableOpacity>
                     </Link>
                   </View>
                   <Text className="text-sm text-github-lightMuted dark:text-github-darkMuted mb-3">
-                    {habit.description || t('habits.noDescription')}
+                    {habit.description || t("habits.noDescription")}
                   </Text>
                   <View className="flex-row items-center">
                     <View
@@ -375,11 +379,17 @@ export default function Habits() {
                       style={{ backgroundColor: habit.color || color.primary }}
                     />
                     <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted mr-4">
-                      {habit.categoryName || t('habits.defaultCategory')}
+                      {habit.categoryName || t("habits.defaultCategory")}
                     </Text>
-                    <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
-                      {t('habits.updated')} {formatRelativeTime(lastUpdated)}
-                    </Text>
+                    {lastUpdated ? (
+                      <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+                        {t("habits.updated")} {formatRelativeTime(lastUpdated)}
+                      </Text>
+                    ) : (
+                      <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+                        {formatRelativeTime(lastUpdated)}
+                      </Text>
+                    )}
                   </View>
                 </View>
 
