@@ -30,6 +30,12 @@ const SORT_OPTIONS = [
   { label: "Name", value: "name" },
 ] as const;
 
+const COMPLETION_FILTERS = [
+  { label: "All", value: "all" },
+  { label: "Completed", value: "completed" },
+  { label: "Incomplete", value: "incomplete" },
+] as const;
+
 export default function Habits() {
   const { color } = useThemeColors();
   const { habits, habitStats, categories, checkIns, fetchData, fetchHabitDetail, updateHabit } =
@@ -42,8 +48,10 @@ export default function Habits() {
   const [sortOption, setSortOption] =
     useState<(typeof SORT_OPTIONS)[number]["value"]>("lastUpdated");
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
+  const [completionFilter, setCompletionFilter] =
+    useState<(typeof COMPLETION_FILTERS)[number]["value"]>("all");
   const [activeMenu, setActiveMenu] = useState<
-    "type" | "sort" | "category" | null
+    "type" | "sort" | "category" | "completion" | null
   >(null);
   const [menuAnchor, setMenuAnchor] = useState<{
     x: number;
@@ -63,6 +71,7 @@ export default function Habits() {
   const typeButtonRef = useRef<View>(null);
   const sortButtonRef = useRef<View>(null);
   const categoryButtonRef = useRef<View>(null);
+  const completionButtonRef = useRef<View>(null);
 
   const todayStr = useMemo(() => {
     const today = new Date();
@@ -76,6 +85,15 @@ export default function Habits() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  const todayValues = useMemo(() => {
+    return checkIns
+      .filter((c) => c.dateString === todayStr)
+      .reduce((acc, curr) => {
+        acc[curr.habitId] = (acc[curr.habitId] || 0) + curr.value;
+        return acc;
+      }, {} as Record<number, number>);
+  }, [checkIns, todayStr]);
 
   const filteredHabits = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
@@ -97,10 +115,21 @@ export default function Habits() {
       return habit.categoryId === categoryFilter;
     };
 
+    const matchesCompletion = (habit: (typeof habits)[number]) => {
+      if (completionFilter === "all") return true;
+      const todayValue = todayValues[habit.id] || 0;
+      const targetValue = habit.targetValue || 1;
+      const isCompleted = todayValue >= targetValue;
+      return completionFilter === "completed" ? isCompleted : !isCompleted;
+    };
+
     const sortedHabits = habits
       .filter(
         (habit) =>
-          matchesSearch(habit) && matchesType(habit) && matchesCategory(habit),
+          matchesSearch(habit) &&
+          matchesType(habit) &&
+          matchesCategory(habit) &&
+          matchesCompletion(habit),
       )
       .sort((a, b) => {
         if ((b.pinned ?? 0) !== (a.pinned ?? 0)) {
@@ -125,10 +154,19 @@ export default function Habits() {
       });
 
     return sortedHabits;
-  }, [habits, habitStats, searchQuery, sortOption, typeFilter, categoryFilter]);
+  }, [
+    habits,
+    habitStats,
+    searchQuery,
+    sortOption,
+    typeFilter,
+    categoryFilter,
+    completionFilter,
+    todayValues,
+  ]);
 
   const openMenu = (
-    menu: "type" | "sort" | "category",
+    menu: "type" | "sort" | "category" | "completion",
     anchorRef: React.RefObject<View | null>,
   ) => {
     if (activeMenu === menu) {
@@ -160,16 +198,20 @@ export default function Habits() {
       ? TYPE_FILTERS
       : activeMenu === "sort"
         ? SORT_OPTIONS
-        : categoryOptions;
+        : activeMenu === "completion"
+          ? COMPLETION_FILTERS
+          : categoryOptions;
 
   const activeMenuValue =
     activeMenu === "type"
       ? typeFilter
       : activeMenu === "sort"
         ? sortOption
-        : categoryFilter === null
-          ? "all"
-          : String(categoryFilter);
+        : activeMenu === "completion"
+          ? completionFilter
+          : categoryFilter === null
+            ? "all"
+            : String(categoryFilter);
 
   const activeHabit = useMemo(
     () => habits.find((h) => h.id === activeHabitId),
@@ -257,6 +299,26 @@ export default function Habits() {
               <Octicons name="triangle-down" size={14} color={color.text} />
             </TouchableOpacity>
           </View>
+          <View
+            ref={completionButtonRef}
+            collapsable={false}
+            className="mr-2 mb-2"
+          >
+            <TouchableOpacity
+              className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-2 py-1 rounded-md"
+              onPress={() => openMenu("completion", completionButtonRef)}
+            >
+              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
+                Today:{" "}
+                {
+                  COMPLETION_FILTERS.find(
+                    (option) => option.value === completionFilter,
+                  )?.label
+                }
+              </Text>
+              <Octicons name="triangle-down" size={14} color={color.text} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
 
@@ -272,10 +334,8 @@ export default function Habits() {
           filteredHabits.map((habit) => {
             const stats = habitStats[habit.id];
             const lastUpdated = stats?.lastTimestamp ?? null;
-            
-            const todayValue = checkIns
-              .filter((c) => c.habitId === habit.id && c.dateString === todayStr)
-              .reduce((acc, curr) => acc + curr.value, 0);
+
+            const todayValue = todayValues[habit.id] || 0;
 
             return (
               <View
@@ -394,6 +454,10 @@ export default function Habits() {
                     } else if (activeMenu === "sort") {
                       setSortOption(
                         option.value as (typeof SORT_OPTIONS)[number]["value"],
+                      );
+                    } else if (activeMenu === "completion") {
+                      setCompletionFilter(
+                        option.value as (typeof COMPLETION_FILTERS)[number]["value"],
                       );
                     } else {
                       setCategoryFilter(

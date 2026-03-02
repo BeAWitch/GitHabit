@@ -147,6 +147,18 @@ export default function HabitDetail() {
     [checkIns, activeCheckInId],
   );
 
+  const goalsAchieved = useMemo(() => {
+    let count = 0;
+    if (!habit) return 0;
+    Object.keys(contributions).forEach((dateStr) => {
+      const dailyTarget = targetValues[dateStr] || habit.targetValue || 1;
+      if (contributions[dateStr] >= dailyTarget) {
+        count++;
+      }
+    });
+    return count;
+  }, [contributions, targetValues, habit]);
+
   if (!habit) {
     return (
       <View className="flex-1 bg-github-lightBg dark:bg-github-darkBg p-4 justify-center items-center">
@@ -378,6 +390,14 @@ export default function HabitDetail() {
           </Text>
           <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
             {formatUnit(stats.total, habit.unitLabel)}
+          </Text>
+        </View>
+        <View className="mr-6">
+          <Text className="text-base font-bold text-github-lightText dark:text-github-darkText">
+            {goalsAchieved}
+          </Text>
+          <Text className="text-xs text-github-lightMuted dark:text-github-darkMuted">
+            goals met
           </Text>
         </View>
         <View>

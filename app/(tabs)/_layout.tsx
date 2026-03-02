@@ -1,6 +1,7 @@
 import { useThemeColors } from "@/hooks/useThemeColors";
 import { Octicons } from "@expo/vector-icons";
 import { Tabs } from "expo-router";
+import { HeaderMenu } from "@/components/HeaderMenu";
 
 export default function TabLayout() {
   const { color } = useThemeColors();
@@ -15,6 +16,7 @@ export default function TabLayout() {
     <Tabs
       screenOptions={{
         headerShown: true,
+        headerRight: () => <HeaderMenu />,
         tabBarActiveTintColor: activeColor,
         tabBarInactiveTintColor: inactiveColor,
         tabBarStyle: {
@@ -28,6 +30,11 @@ export default function TabLayout() {
           borderBottomWidth: 1,
           borderBottomColor: borderColor,
         },
+        headerTitleStyle: {
+          fontWeight: "600",
+          fontSize: 20,
+        },
+        headerTitleAlign: "left",
         headerTintColor: activeColor,
       }}
     >
