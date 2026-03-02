@@ -231,7 +231,7 @@ export default function Home() {
                     key={habit.id}
                     className="w-[48%] bg-github-lightBg dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder p-3 rounded-md flex-col justify-between relative"
                   >
-                    <View className="absolute top-3 right-4 z-10">
+                    <View className="absolute top-3 right-3 z-10">
                       <GoalProgressRing
                         currentValue={todayCount}
                         targetValue={targetCount}
@@ -239,8 +239,8 @@ export default function Home() {
                         strokeWidth={3}
                       />
                     </View>
-                    <View>
-                      <View className="flex-row items-center mb-1 pr-6">
+                    <View className="pr-10">
+                      <View className="flex-row items-center mb-1">
                         <Octicons
                           name="repo"
                           size={16}
