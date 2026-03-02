@@ -314,7 +314,7 @@ export default function Profile() {
       <View className="mb-6">
         <View className="flex-row items-center justify-between mb-3">
           <Text className="text-base font-semibold text-github-lightText dark:text-github-darkText">
-            {activeDays} {formatUnit(activeDays, t("units.day"))} {t("profile.withGoalsMet")}
+            {activeDays} {formatUnit(activeDays, t("time.day"))} {t("profile.withGoalsMet")}
           </Text>
           
           {/* Year Dropdown Button */}
@@ -352,7 +352,7 @@ export default function Profile() {
           {/* Half Width: Longest Streak */}
           <StatCard
             title={t("profile.longestStreak")}
-            value={`${yearlyStats.maxStreak} ${formatUnit(yearlyStats.maxStreak, t("units.day"))}`}
+            value={`${yearlyStats.maxStreak} ${formatUnit(yearlyStats.maxStreak, t("time.day"))}`}
             subtitle={t("profile.personalBest")}
             iconName="flame"
             iconColor="#e34c26"
@@ -379,7 +379,7 @@ export default function Profile() {
           {/* Half Width: Active Days / Completion Rate */}
           <StatCard
             title={t("profile.activeDays")}
-            value={`${activeDays} ${formatUnit(activeDays, t("units.day"))}`}
+            value={`${activeDays} ${formatUnit(activeDays, t("time.day"))}`}
             subtitle={t("profile.percentOfDays", { completionRate: yearlyStats.completionRate, daysPassed: yearlyStats.daysPassed })}
             iconName="check-circle"
             iconColor={color.primary}

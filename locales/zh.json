@@ -195,7 +195,6 @@
     "version": "版本"
   },
   "units": {
-    "day": "天",
     "commit": "次提交",
     "goal": "个目标",
     "time": "次",
@@ -210,6 +209,7 @@
     "noActivity": "此期间无活动"
   },
   "time": {
+    "day": "天",
     "minute": "分钟",
     "hour": "小时",
     "yesterday": "昨天",
