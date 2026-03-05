@@ -1,51 +1,102 @@
-## 概念映射与开发计划
+# GitHabit
 
-### 1. 概念与逻辑映射 (GitHub -> 打卡应用)
+[English](#english) | [简体中文](#chinese)
 
-我们将 GitHub 的核心元素完全映射到日常习惯养成中：
+> **Build habits like you build code. 像写代码一样养成习惯。**
 
-- **User Profile (个人主页)** -> **打卡概览**：展示年度总“Commits”（总打卡次数），以及最核心的**全局绿色热力图**（Contribution Graph）。
-- **Repository (仓库)** -> **一个计划/习惯**：比如 `daily-reading` 或 `workout-2024`。
-  - *Repo Name*：习惯的名称。
-  - *Description*：对该习惯的具体描述或目标。
-  - *Language (小圆点)*：习惯分类（例如 🟡 Health，🔵 Learning）。
-  - *Stars / Forks*：可以用来记录该习惯的“最高连续打卡天数 (Max Streak)”。
-- **Commit / Push (提交)** -> **单次打卡动作**：
-  - *Commit Message*：打卡时填写的备忘、日记或执行心得（例如：“Fix: 今天太累了，只跑了 3 公里”）。
-  - *Timestamp*：精确的打卡时间戳。
-- **Pinned Repos (置顶仓库)** -> **置顶关注的重点习惯**：展示在 Profile 页面的上半部分。
+GitHabit is an open-source, offline-first mobile habit tracker designed for developers, efficiency enthusiasts, and geeks. It heavily mimics the aesthetic, concepts, and interaction logic of GitHub. 
 
-### 2. 技术栈架构设计
+GitHabit 是一款为开发者、极客和效率爱好者设计的开源、纯离线习惯养成应用，深度还原了 GitHub 的 UI 风格与交互逻辑。不仅能帮你记录日常习惯，还能为你生成专属的 365 天“绿格子”贡献图。
 
-- **框架**: Expo Router (您当前目录已经搭建好的基础)。
-- **本地存储 (Expo SQLite)**: 建立两个核心表：
-  - `Habits` (id, name, description, color_category, created_at)
-  - `Commits` (id, habit_id, message, timestamp, date_string)
-  - *优势*: 统计某个月/某年的打卡频次，生成热力图只需要一句简单的 `GROUP BY date_string` SQL 查询，性能极高。
-- **状态管理 (Zustand)**: 主要用于维护全局主题（Dark/Light/System）和当前用户的统计数据缓存。
-- **UI 与样式 (NativeWind)**: 还原 GitHub 的原子化设计，例如：绿色主要按钮、深色模式下 `#0d1117` 的背景色与 `#30363d` 的边框线。
-- **图标系统**: 直接使用项目内置的 `@expo/vector-icons/Octicons`，这是 GitHub 官方的开源图标库，能最大程度还原味道。
-- **核心组件 - 热力图 (Heatmap)**: 鉴于市面上的 RN 热力图组件多较老旧，我们将使用 `ScrollView` + `View` 原生手写一个 52周 x 7天 的网格系统，配合 GitHub 经典的五阶色值。
+---
 
-### 3. 分步实施计划 (Implementation Steps)
+## <a id="english"></a>English
 
-**第一阶段：基础设施与数据层搭建**
+### ✨ Features
 
-1. 安装并配置 `NativeWind` (TailwindCSS)。
-2. 配置 `Zustand`，实现全局明暗主题切换逻辑。
-3. 封装 `Expo SQLite` 数据库实例，编写初始化建表脚本，提供 CRUD 的 Hooks (`useHabits`, `useCommits`)。
+*   📊 **Contribution Graph**: Visualize your consistency with a 365-day GitHub-style green heatmap. The more you do, the darker the green!
+*   📁 **Habits as Repositories**: Create structured goals with custom colors, target values, and cycle units.
+*   💬 **Check-ins as Commits**: Log your progress with "Commit Messages", specific values, and track your history on a Timeline.
+*   📝 **Markdown Support**: Write detailed `README.md` descriptions for your habits.
+*   📈 **Data Analytics**: View your progress through Goal Progress Rings and Line Charts for individual habits.
+*   🎨 **Geeky Aesthetic**: Authentic GitHub Light/Dark themes and typography using Octicons.
+*   🔒 **Privacy First**: 100% offline. All data is securely stored locally via SQLite.
+*   💾 **Full Data Control**: Export and import your entire database as a JSON file.
+*   🌍 **i18n Support**: Switch seamlessly between languages (English / 中文).
 
-**第二阶段：GitHub 风格核心组件库开发**
+### 🛠️ Tech Stack
 
-1. **基础元素**：文本组件、GitHub 风格绿色按钮 (`btn-primary`)、输入框。
-2. **Repository Card**：列表中的习惯卡片，展示名称、标签、时间信息。
-3. **Contribution Graph (重中之重)**：接收一组日期数据，渲染出 5 种不同绿色深浅的贡献图（支持 Dark/Light 两套色值）。
-4. **Commit Timeline**：打卡历史的时间轴列表。
+*   **Framework:** [React Native](https://reactnative.dev/) / [Expo](https://expo.dev/) (Expo Router)
+*   **Language:** [TypeScript](https://www.typescriptlang.org/) (Strict Mode)
+*   **Styling:** [NativeWind](https://www.nativewind.dev/) (Tailwind CSS for React Native)
+*   **State Management:** [Zustand](https://github.com/pmndrs/zustand)
+*   **Local Storage:** Expo SQLite
+*   **Icons:** `@expo/vector-icons` (Octicons)
 
-**第三阶段：页面路由与业务逻辑集成**
+### 🚀 Getting Started
 
-1. **(tabs)/profile**：个人首页，顶部的总览数据 + 贡献图 + 置顶习惯。
-2. **(tabs)/repos**：全部计划列表，右上角包含 `+ New` 新建仓库（习惯）功能。
-3. **repo/[id]**：习惯详情页，专属的单项热力图、历史 Commits 列表，底部悬浮核心的 `[ Commit ]` 打卡按钮。
-4. **commit/[id]**：打卡交互界面，类似终端或 Git GUI 的输入框，提交 Message。
-5. **(tabs)/settings**：控制台，用于切换主题或导出数据。
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/your-username/GitHabit.git
+   cd GitHabit
+   ```
+2. **Install dependencies**
+   ```bash
+   npm install
+   ```
+3. **Start the development server**
+   ```bash
+   npx expo start
+   ```
+4. **Run the app**
+   * Press `a` to run on an Android emulator.
+   * Press `i` to run on an iOS simulator.
+   * Or scan the QR code with the **Expo Go** app on your physical device.
+
+---
+
+## <a id="chinese"></a>简体中文
+
+### ✨ 核心特性
+
+*   📊 **贡献热力图 (Contribution Graph)**：像 GitHub 绿格子一样，可视化你一整年的习惯坚持情况。打卡越多，绿色越深！
+*   📁 **习惯即仓库 (Repositories)**：创建结构化的目标，自定义颜色、目标数值和周期单位。
+*   💬 **打卡即提交 (Commits)**：用“Commit Message”记录每次打卡的心得，并附带具体数值，在时间线上追踪历史。
+*   📝 **Markdown 支持**：为你的习惯编写详细的 `README.md` 描述和规则。
+*   📈 **数据分析**：通过目标进度环和折线图，直观查看单项习惯的进展与趋势。
+*   🎨 **极客美学**：原汁原味的 GitHub 深色/浅色主题，以及原生 Octicons 图标。
+*   🔒 **隐私优先**：100% 离线运行。所有数据均安全地存储在本地 SQLite 数据库中，不过传云端。
+*   💾 **数据掌控**：支持将所有数据导出为 JSON 文件，或从 JSON 文件导入，换机无忧。
+*   🌍 **多语言支持**：无缝切换英语和中文。
+
+### 🛠️ 技术栈
+
+*   **框架:** [React Native](https://reactnative.dev/) / [Expo](https://expo.dev/) (Expo Router)
+*   **语言:** [TypeScript](https://www.typescriptlang.org/) (严格模式)
+*   **样式:** [NativeWind](https://www.nativewind.dev/) (针对 React Native 的 Tailwind CSS)
+*   **状态管理:** [Zustand](https://github.com/pmndrs/zustand)
+*   **本地存储:** Expo SQLite
+*   **图标库:** `@expo/vector-icons` (Octicons)
+
+### 🚀 快速开始
+
+1. **克隆项目到本地**
+   ```bash
+   git clone https://github.com/your-username/GitHabit.git
+   cd GitHabit
+   ```
+2. **安装依赖**
+   ```bash
+   npm install
+   ```
+3. **启动开发服务器**
+   ```bash
+   npx expo start
+   ```
+4. **运行应用**
+   * 终端中按 `a` 在 Android 模拟器上运行。
+   * 终端中按 `i` 在 iOS 模拟器上运行。
+   * 或使用手机上的 **Expo Go** 应用扫描终端生成的二维码直接在真机运行。
+
+---
+*If you like this project, please consider giving it a ⭐! / 如果喜欢这个项目，欢迎点个 ⭐ 关注！*
