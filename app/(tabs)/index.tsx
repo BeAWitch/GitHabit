@@ -149,18 +149,27 @@ export default function Home() {
 
   const groupedActivities = useMemo(() => {
     const groups: ActivityGroup[] = [];
-    const recent = recentActivities.slice(0, 50);
+    const checkInGroupMap = new Map<number, ActivityGroup>();
 
-    for (const activity of recent) {
-      const lastGroup = groups[groups.length - 1];
-
-      if (
-        lastGroup &&
-        lastGroup.type === "check_in" &&
-        activity.type === "check_in" &&
-        lastGroup.habitId === activity.habitId
-      ) {
-        lastGroup.activities.push(activity);
+    for (const activity of recentActivities) {
+      if (activity.type === "check_in") {
+        let group = checkInGroupMap.get(activity.habitId);
+        if (!group) {
+          group = {
+            id: `${activity.id}_group`,
+            type: activity.type,
+            habitId: activity.habitId,
+            habitName: activity.habitName,
+            timestamp: activity.timestamp,
+            activities: [],
+          };
+          checkInGroupMap.set(activity.habitId, group);
+          groups.push(group);
+        }
+        
+        if (group.activities.length < 10) {
+          group.activities.push(activity);
+        }
       } else {
         groups.push({
           id: `${activity.id}_group`,
@@ -173,7 +182,7 @@ export default function Home() {
       }
     }
 
-    return groups.slice(0, 10);
+    return groups.sort((a, b) => b.timestamp - a.timestamp);
   }, [recentActivities]);
 
   const activeCommitHabit = useMemo(

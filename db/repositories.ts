@@ -182,7 +182,7 @@ export const getRecentActivities = (): TimelineActivity[] => {
     WHERE h.status = 'deleted' AND h.deletedAt IS NOT NULL
 
     ORDER BY timestamp DESC
-    LIMIT 100;
+    LIMIT 500;
   `);
 };
 
