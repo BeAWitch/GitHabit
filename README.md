@@ -8,6 +8,10 @@ GitHabit is an open-source, offline-first mobile habit tracker designed for deve
 
 GitHabit 是一款为开发者、极客和效率爱好者设计的开源、纯离线习惯养成应用，深度还原了 GitHub 的 UI 风格与交互逻辑。不仅能帮你记录日常习惯，还能为你生成专属的 365 天“绿格子”贡献图。
 
+<img src="https://github.com/user-attachments/assets/398c12ad-ab7f-46de-865d-5aa9c09856e4" alt="Screenshot of GitHabit app" width="200">
+<img src="https://github.com/user-attachments/assets/dfe62937-cc57-4ca4-ae83-61cb504c980d" alt="Screenshot of GitHabit app" width="200">
+<img src="https://github.com/user-attachments/assets/953e0679-7206-4958-af2d-9688888ea01d" alt="Screenshot of GitHabit app" width="200">
+<img src="https://github.com/user-attachments/assets/61ddfed5-46c2-4515-9acf-0e89e5fd0aef" alt="Screenshot of GitHabit app" width="200">
 ---
 
 ## <a id="english"></a>English
@@ -36,7 +40,8 @@ GitHabit 是一款为开发者、极客和效率爱好者设计的开源、纯�
 ### 🚀 Getting Started
 
 1. **Clone the repository**
-   ```bash
+   ```bash![Screenshot_2026-03-05-15-46-54-051_host exp exponent](https://github.com/user-attachments/assets/c9d90fca-9649-4305-836d-0fb394c9c8e8)
+
    git clone https://github.com/your-username/GitHabit.git
    cd GitHabit
    ```
