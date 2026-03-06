@@ -1,7 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  Animated,
-  Easing,
   Modal,
   ScrollView,
   StyleSheet,
@@ -14,6 +12,7 @@ import {
 import { Octicons } from "@expo/vector-icons";
 import { Link, router, Tabs } from "expo-router";
 import { useTranslation } from "react-i18next";
+import { FilterDropdown } from "@/components/FilterDropdown";
 
 import { HabitFormModal } from "@/components/HabitFormModal";
 import { GoalProgressRing } from "@/components/GoalProgressRing";
@@ -28,22 +27,22 @@ export default function Habits() {
     useHabitStore();
 
   const TYPE_FILTERS = useMemo(() => [
-    { label: t('habits.all'), value: "all" },
-    { label: t('habits.active'), value: "active" },
-    { label: t('habits.archived'), value: "archived" },
+    { label: `${t('habits.type')} ${t('habits.all')}`, value: "all", rawLabel: t('habits.all') },
+    { label: `${t('habits.type')} ${t('habits.active')}`, value: "active", rawLabel: t('habits.active') },
+    { label: `${t('habits.type')} ${t('habits.archived')}`, value: "archived", rawLabel: t('habits.archived') },
   ], [t]);
 
   const SORT_OPTIONS = useMemo(() => [
-    { label: t('habits.lastUpdated'), value: "lastUpdated" },
-    { label: t('habits.newest'), value: "newest" },
-    { label: t('habits.oldest'), value: "oldest" },
-    { label: t('habits.name'), value: "name" },
+    { label: `${t('habits.sort')} ${t('habits.lastUpdated')}`, value: "lastUpdated", rawLabel: t('habits.lastUpdated') },
+    { label: `${t('habits.sort')} ${t('habits.newest')}`, value: "newest", rawLabel: t('habits.newest') },
+    { label: `${t('habits.sort')} ${t('habits.oldest')}`, value: "oldest", rawLabel: t('habits.oldest') },
+    { label: `${t('habits.sort')} ${t('habits.name')}`, value: "name", rawLabel: t('habits.name') },
   ], [t]);
 
   const COMPLETION_FILTERS = useMemo(() => [
-    { label: t('habits.all'), value: "all" },
-    { label: t('habits.completed'), value: "completed" },
-    { label: t('habits.incomplete'), value: "incomplete" },
+    { label: `${t('habits.today')} ${t('habits.all')}`, value: "all", rawLabel: t('habits.all') },
+    { label: `${t('habits.today')} ${t('habits.completed')}`, value: "completed", rawLabel: t('habits.completed') },
+    { label: `${t('habits.today')} ${t('habits.incomplete')}`, value: "incomplete", rawLabel: t('habits.incomplete') },
   ], [t]);
 
   const [isModalVisible, setModalVisible] = useState(false);
@@ -55,15 +54,6 @@ export default function Habits() {
   const [categoryFilter, setCategoryFilter] = useState<number | null>(null);
   const [completionFilter, setCompletionFilter] =
     useState<"all" | "completed" | "incomplete">("all");
-  const [activeMenu, setActiveMenu] = useState<
-    "type" | "sort" | "category" | "completion" | null
-  >(null);
-  const [menuAnchor, setMenuAnchor] = useState<{
-    x: number;
-    y: number;
-    width: number;
-    height: number;
-  } | null>(null);
 
   const [activeHabitId, setActiveHabitId] = useState<number | null>(null);
   const [habitMenuAnchor, setHabitMenuAnchor] = useState<{
@@ -73,13 +63,7 @@ export default function Habits() {
     height: number;
   } | null>(null);
 
-  const typeButtonRef = useRef<View>(null);
-  const sortButtonRef = useRef<View>(null);
-  const categoryButtonRef = useRef<View>(null);
-  const completionButtonRef = useRef<View>(null);
   const habitRefs = useRef<Record<number, View | null>>({});
-
-  const menuScaleY = useRef(new Animated.Value(0)).current;
 
   const todayStr = useMemo(() => {
     return getLocalDateString();
@@ -168,71 +152,17 @@ export default function Habits() {
     todayValues,
   ]);
 
-  const closeMenu = () => {
-    Animated.timing(menuScaleY, {
-      toValue: 0,
-      duration: 150,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => {
-      setActiveMenu(null);
-    });
-  };
-
-  const openMenu = (
-    menu: "type" | "sort" | "category" | "completion",
-    anchorRef: React.RefObject<View | null>,
-  ) => {
-    if (activeMenu === menu) {
-      closeMenu();
-      return;
-    }
-
-    requestAnimationFrame(() => {
-      anchorRef.current?.measureInWindow((x, y, width, height) => {
-        setMenuAnchor({ x, y, width, height });
-        setActiveMenu(menu);
-        menuScaleY.setValue(0);
-        Animated.timing(menuScaleY, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }).start();
-      });
-    });
-  };
-
   const categoryOptions = useMemo(
     () => [
-      { label: t('habits.all'), value: "all" },
+      { label: `${t('habits.category')} ${t('habits.all')}`, value: "all", rawLabel: t('habits.all') },
       ...categories.map((category) => ({
-        label: category.name,
+        label: `${t('habits.category')} ${category.name}`,
         value: String(category.id),
+        rawLabel: category.name,
       })),
     ],
     [categories, t],
   );
-
-  const activeMenuOptions =
-    activeMenu === "type"
-      ? TYPE_FILTERS
-      : activeMenu === "sort"
-        ? SORT_OPTIONS
-        : activeMenu === "completion"
-          ? COMPLETION_FILTERS
-          : categoryOptions;
-
-  const activeMenuValue =
-    activeMenu === "type"
-      ? typeFilter
-      : activeMenu === "sort"
-        ? sortOption
-        : activeMenu === "completion"
-          ? completionFilter
-          : categoryFilter === null
-            ? "all"
-            : String(categoryFilter);
 
   const activeHabit = useMemo(
     () => habits.find((h) => h.id === activeHabitId),
@@ -284,7 +214,6 @@ export default function Habits() {
             placeholderTextColor={color.muted}
             value={searchQuery}
             onChangeText={setSearchQuery}
-            onFocus={() => setActiveMenu(null)}
           />
           <Octicons name="search" size={16} color={color.muted} />
         </View>
@@ -302,77 +231,31 @@ export default function Habits() {
 
       {/* Filter / Sort Row */}
       <View className="mb-4">
-        <View className="flex-row flex-wrap items-center">
-          <View ref={typeButtonRef} collapsable={false} className="mr-2 mb-2">
-            <TouchableOpacity
-              className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-3 py-1 rounded-md"
-              onPress={() => openMenu("type", typeButtonRef)}
-            >
-              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                {t('habits.type')}{" "}
-                {
-                  TYPE_FILTERS.find((option) => option.value === typeFilter)
-                    ?.label
-                }
-              </Text>
-              <Octicons name="triangle-down" size={14} color={color.text} />
-            </TouchableOpacity>
-          </View>
-          <View ref={sortButtonRef} collapsable={false} className="mr-2 mb-2">
-            <TouchableOpacity
-              className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-3 py-1 rounded-md"
-              onPress={() => openMenu("sort", sortButtonRef)}
-            >
-              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                {t('habits.sort')}{" "}
-                {
-                  SORT_OPTIONS.find((option) => option.value === sortOption)
-                    ?.label
-                }
-              </Text>
-              <Octicons name="triangle-down" size={14} color={color.text} />
-            </TouchableOpacity>
-          </View>
-          <View
-            ref={categoryButtonRef}
-            collapsable={false}
-            className="mr-2 mb-2"
-          >
-            <TouchableOpacity
-              className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-2 py-1 rounded-md"
-              onPress={() => openMenu("category", categoryButtonRef)}
-            >
-              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                {t('habits.category')}{" "}
-                {categoryFilter === null
-                  ? t('habits.all')
-                  : categories.find(
-                      (category) => category.id === categoryFilter,
-                    )?.name || t('habits.all')}
-              </Text>
-              <Octicons name="triangle-down" size={14} color={color.text} />
-            </TouchableOpacity>
-          </View>
-          <View
-            ref={completionButtonRef}
-            collapsable={false}
-            className="mr-2 mb-2"
-          >
-            <TouchableOpacity
-              className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-2 py-1 rounded-md"
-              onPress={() => openMenu("completion", completionButtonRef)}
-            >
-              <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-2">
-                {t('habits.today')}{" "}
-                {
-                  COMPLETION_FILTERS.find(
-                    (option) => option.value === completionFilter,
-                  )?.label
-                }
-              </Text>
-              <Octicons name="triangle-down" size={14} color={color.text} />
-            </TouchableOpacity>
-          </View>
+        <View className="flex-row flex-wrap items-center gap-2">
+          <FilterDropdown
+            data={TYPE_FILTERS}
+            value={typeFilter}
+            onChange={(val) => setTypeFilter(val as any)}
+            fontSize={11}
+          />
+          <FilterDropdown
+            data={SORT_OPTIONS}
+            value={sortOption}
+            onChange={(val) => setSortOption(val as any)}
+            fontSize={11}
+          />
+          <FilterDropdown
+            data={categoryOptions}
+            value={categoryFilter === null ? "all" : String(categoryFilter)}
+            onChange={(val) => setCategoryFilter(val === "all" ? null : Number(val))}
+            fontSize={11}
+          />
+          <FilterDropdown
+            data={COMPLETION_FILTERS}
+            value={completionFilter}
+            onChange={(val) => setCompletionFilter(val as any)}
+            fontSize={11}
+          />
         </View>
       </View>
 
@@ -485,72 +368,6 @@ export default function Habits() {
         visible={isModalVisible}
         onClose={() => setModalVisible(false)}
       />
-      <Modal
-        visible={activeMenu !== null}
-        transparent
-        animationType="none"
-        onRequestClose={closeMenu}
-      >
-        <View style={StyleSheet.absoluteFill}>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={closeMenu}
-          />
-          {menuAnchor && (
-            <Animated.View
-              className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden"
-              style={{
-                position: "absolute",
-                top: menuAnchor.y + menuAnchor.height + 8,
-                left: menuAnchor.x,
-                minWidth: menuAnchor.width,
-                zIndex: 10,
-                transformOrigin: "top",
-                transform: [{ scaleY: menuScaleY }],
-                opacity: menuScaleY.interpolate({
-                  inputRange: [0, 0.1, 1],
-                  outputRange: [0, 1, 1],
-                }),
-              }}
-            >
-              {activeMenuOptions.map((option) => (
-                <TouchableOpacity
-                  key={option.value}
-                  className="flex-row items-center justify-between px-3 py-2"
-                  onPress={() => {
-                    if (activeMenu === "type") {
-                      setTypeFilter(
-                        option.value as "all" | "active" | "archived",
-                      );
-                    } else if (activeMenu === "sort") {
-                      setSortOption(
-                        option.value as "lastUpdated" | "newest" | "oldest" | "name",
-                      );
-                    } else if (activeMenu === "completion") {
-                      setCompletionFilter(
-                        option.value as "all" | "completed" | "incomplete",
-                      );
-                    } else {
-                      setCategoryFilter(
-                        option.value === "all" ? null : Number(option.value),
-                      );
-                    }
-                    closeMenu();
-                  }}
-                >
-                  <Text className="text-sm text-github-lightText dark:text-github-darkText">
-                    {option.label}
-                  </Text>
-                  {activeMenuValue === option.value && (
-                    <Octicons name="check" size={14} color={color.primary} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </Animated.View>
-          )}
-        </View>
-      </Modal>
 
       {/* Habit Actions Modal */}
       <Modal

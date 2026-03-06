@@ -1,16 +1,8 @@
-import React, { useRef, useState } from "react";
-import {
-  Animated,
-  Easing,
-  Modal,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React from "react";
+import { Text, View } from "react-native";
 import { Octicons } from "@expo/vector-icons";
 import { useThemeColors } from "@/hooks/useThemeColors";
+import { Dropdown } from "react-native-element-dropdown";
 
 interface YearPickerProps {
   selectedYear: number;
@@ -24,104 +16,57 @@ export function YearPicker({
   onYearSelect,
 }: YearPickerProps) {
   const { color } = useThemeColors();
-  const [isPickerVisible, setIsPickerVisible] = useState(false);
-  const [dropdownPos, setDropdownPos] = useState({ x: 0, y: 0, width: 0 });
-  const buttonRef = useRef<View>(null);
-  const menuScaleY = useRef(new Animated.Value(0)).current;
 
-  const closePicker = () => {
-    Animated.timing(menuScaleY, {
-      toValue: 0,
-      duration: 150,
-      easing: Easing.inOut(Easing.ease),
-      useNativeDriver: true,
-    }).start(() => {
-      setIsPickerVisible(false);
-    });
-  };
-
-  const openPicker = () => {
-    requestAnimationFrame(() => {
-      buttonRef.current?.measureInWindow((x, y, width, height) => {
-        setDropdownPos({
-          x: x,
-          y: y + height + 8, // 8px gap below the button
-          width: Math.max(80, width), // min width for dropdown
-        });
-        setIsPickerVisible(true);
-        menuScaleY.setValue(0);
-        Animated.timing(menuScaleY, {
-          toValue: 1,
-          duration: 200,
-          easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
-        }).start();
-      });
-    });
-  };
+  const data = availableYears.map((year) => ({
+    label: year.toString(),
+    value: year.toString(),
+  }));
 
   return (
-    <>
-      <TouchableOpacity
-        ref={buttonRef}
-        className="flex-row items-center bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder px-2 py-1 rounded-md"
-        onPress={openPicker}
+    <View className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden flex-row">
+      {/* Invisible placeholder for auto-sizing */}
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, minHeight: 28, opacity: 0 }}
+        pointerEvents="none"
       >
-        <Text className="text-sm font-semibold text-github-lightText dark:text-github-darkText mr-1">
-          {selectedYear}
-        </Text>
-        <Octicons name="chevron-down" size={14} color={color.muted} />
-      </TouchableOpacity>
+        <Text style={{ fontSize: 12, fontWeight: '600' }} numberOfLines={1}>{selectedYear.toString()}</Text>
+        <Octicons name="chevron-down" size={12} style={{ marginLeft: 6 }} />
+      </View>
 
-      <Modal
-        visible={isPickerVisible}
-        transparent
-        animationType="none"
-        onRequestClose={closePicker}
-      >
-        <View style={StyleSheet.absoluteFill}>
-          <TouchableOpacity
-            style={StyleSheet.absoluteFill}
-            activeOpacity={1}
-            onPress={closePicker}
-          />
-          <Animated.View
-            className="absolute bg-github-lightCanvas dark:bg-github-darkCanvas rounded-md border border-github-lightBorder dark:border-github-darkBorder overflow-hidden"
-            style={{
-              top: dropdownPos.y,
-              left: dropdownPos.x - (dropdownPos.width - 60), // Adjusting left so it aligns better rightwards if needed
-              minWidth: dropdownPos.width,
-              zIndex: 10,
-              transformOrigin: "top",
-              transform: [{ scaleY: menuScaleY }],
-              opacity: menuScaleY.interpolate({
-                inputRange: [0, 0.1, 1],
-                outputRange: [0, 1, 1],
-              }),
-            }}
-          >
-            <ScrollView className="max-h-48" bounces={false}>
-              {availableYears.map((year) => (
-                <TouchableOpacity
-                  key={year}
-                  className="flex-row items-center justify-between px-3 py-2"
-                  onPress={() => {
-                    onYearSelect(year);
-                    closePicker();
-                  }}
-                >
-                  <Text className="text-sm text-github-lightText dark:text-github-darkText">
-                    {year}
-                  </Text>
-                  {selectedYear === year && (
-                    <Octicons name="check" size={14} color={color.primary} />
-                  )}
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
-          </Animated.View>
-        </View>
-      </Modal>
-    </>
+      <Dropdown
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, paddingHorizontal: 8, justifyContent: 'center' }}
+        containerStyle={{
+          backgroundColor: color.canvas,
+          borderColor: color.border,
+          borderWidth: 1,
+          borderRadius: 6,
+          minWidth: 80,
+        }}
+        selectedTextStyle={{ color: color.text, fontSize: 12, fontWeight: "600" }}
+        selectedTextProps={{ numberOfLines: 1 }}
+        activeColor={color.border}
+        itemTextStyle={{ color: color.text, fontSize: 12 }}
+        data={data}
+        maxHeight={300}
+        labelField="label"
+        valueField="value"
+        value={selectedYear.toString()}
+        onChange={(item) => {
+          onYearSelect(parseInt(item.value, 10));
+        }}
+        renderRightIcon={() => (
+          <Octicons name="chevron-down" size={12} color={color.text} style={{ marginLeft: 6 }} />
+        )}
+        renderItem={(item) => (
+          <View className="flex-row items-center justify-between px-3 py-2">
+            <Text style={{ color: color.text, fontSize: 12 }}>{item.label}</Text>
+            {item.value === selectedYear.toString() && (
+              <Octicons name="check" size={12} color={color.primary} style={{ marginLeft: 8 }} />
+            )}
+          </View>
+        )}
+        autoScroll={false}
+      />
+    </View>
   );
 }
