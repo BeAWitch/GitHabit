@@ -24,6 +24,7 @@ interface CommitModalProps {
   initialValue?: number;
   onClose: () => void;
   onSubmit: (value: number, message: string) => void;
+  onDelete?: () => void;
 }
 
 export const CommitModal: React.FC<CommitModalProps> = ({
@@ -35,6 +36,7 @@ export const CommitModal: React.FC<CommitModalProps> = ({
   initialValue = 1,
   onClose,
   onSubmit,
+  onDelete,
 }) => {
   const { color } = useThemeColors();
   const { t } = useTranslation();
@@ -112,27 +114,46 @@ export const CommitModal: React.FC<CommitModalProps> = ({
             )}
           </View>
 
-          <View className="p-4 border-t border-github-lightBorder dark:border-github-darkBorder flex-row justify-end">
-            <TouchableOpacity
-              className="px-4 py-2 bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md mr-3"
-              onPress={onClose}
-            >
-              <Text className="font-semibold text-github-lightText dark:text-github-darkText">
-                {t("commitModal.cancel")}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              className={`px-4 py-2 rounded-md ${!isValid ? "opacity-50" : ""}`}
-              style={{ backgroundColor: color.primary }}
-              disabled={!isValid}
-              onPress={() => {
-                const finalValue = unitType === "binary" ? (initialValue > 0 ? initialValue : 1) : parsedValue;
-                onSubmit(finalValue, message.trim());
-                onClose();
-              }}
-            >
-              <Text className="font-bold text-white">{initialMessage ? t("commitModal.editCommit") : t("commitModal.commit")}</Text>
-            </TouchableOpacity>
+          <View className="p-4 border-t border-github-lightBorder dark:border-github-darkBorder flex-row justify-between">
+            {onDelete ? (
+              <TouchableOpacity
+                className="px-4 py-2 border border-transparent rounded-md flex-row items-center"
+                onPress={() => {
+                  onDelete();
+                  onClose();
+                }}
+              >
+                <Octicons name="trash" size={16} color={color.danger} className="mr-2" />
+                <Text className="font-semibold text-github-lightDanger dark:text-github-darkDanger">
+                  {t("habit.delete")}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View /> // Placeholder to keep spacing if needed, though justify-between pushes right items correctly
+            )}
+            
+            <View className="flex-row">
+              <TouchableOpacity
+                className="px-4 py-2 bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md mr-3"
+                onPress={onClose}
+              >
+                <Text className="font-semibold text-github-lightText dark:text-github-darkText">
+                  {t("commitModal.cancel")}
+                </Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                className={`px-4 py-2 rounded-md ${!isValid ? "opacity-50" : ""}`}
+                style={{ backgroundColor: color.primary }}
+                disabled={!isValid}
+                onPress={() => {
+                  const finalValue = unitType === "binary" ? (initialValue > 0 ? initialValue : 1) : parsedValue;
+                  onSubmit(finalValue, message.trim());
+                  onClose();
+                }}
+              >
+                <Text className="font-bold text-white">{initialMessage ? t("commitModal.editCommit") : t("commitModal.commit")}</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         </View>
       </KeyboardAvoidingView>
