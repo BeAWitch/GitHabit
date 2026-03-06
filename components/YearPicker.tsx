@@ -1,5 +1,7 @@
 import React, { useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Modal,
   ScrollView,
   StyleSheet,
@@ -25,6 +27,18 @@ export function YearPicker({
   const [isPickerVisible, setIsPickerVisible] = useState(false);
   const [dropdownPos, setDropdownPos] = useState({ x: 0, y: 0, width: 0 });
   const buttonRef = useRef<View>(null);
+  const menuScaleY = useRef(new Animated.Value(0)).current;
+
+  const closePicker = () => {
+    Animated.timing(menuScaleY, {
+      toValue: 0,
+      duration: 150,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => {
+      setIsPickerVisible(false);
+    });
+  };
 
   const openPicker = () => {
     requestAnimationFrame(() => {
@@ -35,6 +49,13 @@ export function YearPicker({
           width: Math.max(80, width), // min width for dropdown
         });
         setIsPickerVisible(true);
+        menuScaleY.setValue(0);
+        Animated.timing(menuScaleY, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start();
       });
     });
   };
@@ -55,22 +76,28 @@ export function YearPicker({
       <Modal
         visible={isPickerVisible}
         transparent
-        animationType="fade"
-        onRequestClose={() => setIsPickerVisible(false)}
+        animationType="none"
+        onRequestClose={closePicker}
       >
         <View style={StyleSheet.absoluteFill}>
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => setIsPickerVisible(false)}
+            onPress={closePicker}
           />
-          <View
+          <Animated.View
             className="absolute bg-github-lightCanvas dark:bg-github-darkCanvas rounded-md border border-github-lightBorder dark:border-github-darkBorder overflow-hidden"
             style={{
               top: dropdownPos.y,
               left: dropdownPos.x - (dropdownPos.width - 60), // Adjusting left so it aligns better rightwards if needed
               minWidth: dropdownPos.width,
               zIndex: 10,
+              transformOrigin: "top",
+              transform: [{ scaleY: menuScaleY }],
+              opacity: menuScaleY.interpolate({
+                inputRange: [0, 0.1, 1],
+                outputRange: [0, 1, 1],
+              }),
             }}
           >
             <ScrollView className="max-h-48" bounces={false}>
@@ -80,7 +107,7 @@ export function YearPicker({
                   className="flex-row items-center justify-between px-3 py-2"
                   onPress={() => {
                     onYearSelect(year);
-                    setIsPickerVisible(false);
+                    closePicker();
                   }}
                 >
                   <Text className="text-sm text-github-lightText dark:text-github-darkText">
@@ -92,7 +119,7 @@ export function YearPicker({
                 </TouchableOpacity>
               ))}
             </ScrollView>
-          </View>
+          </Animated.View>
         </View>
       </Modal>
     </>

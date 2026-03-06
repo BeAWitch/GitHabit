@@ -1,5 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
+  Animated,
+  Easing,
   Modal,
   ScrollView,
   StyleSheet,
@@ -75,6 +77,9 @@ export default function Habits() {
   const sortButtonRef = useRef<View>(null);
   const categoryButtonRef = useRef<View>(null);
   const completionButtonRef = useRef<View>(null);
+  const habitRefs = useRef<Record<number, View | null>>({});
+
+  const menuScaleY = useRef(new Animated.Value(0)).current;
 
   const todayStr = useMemo(() => {
     return getLocalDateString();
@@ -163,12 +168,23 @@ export default function Habits() {
     todayValues,
   ]);
 
+  const closeMenu = () => {
+    Animated.timing(menuScaleY, {
+      toValue: 0,
+      duration: 150,
+      easing: Easing.inOut(Easing.ease),
+      useNativeDriver: true,
+    }).start(() => {
+      setActiveMenu(null);
+    });
+  };
+
   const openMenu = (
     menu: "type" | "sort" | "category" | "completion",
     anchorRef: React.RefObject<View | null>,
   ) => {
     if (activeMenu === menu) {
-      setActiveMenu(null);
+      closeMenu();
       return;
     }
 
@@ -176,6 +192,13 @@ export default function Habits() {
       anchorRef.current?.measureInWindow((x, y, width, height) => {
         setMenuAnchor({ x, y, width, height });
         setActiveMenu(menu);
+        menuScaleY.setValue(0);
+        Animated.timing(menuScaleY, {
+          toValue: 1,
+          duration: 200,
+          easing: Easing.out(Easing.ease),
+          useNativeDriver: true,
+        }).start();
       });
     });
   };
@@ -430,16 +453,18 @@ export default function Habits() {
                     strokeWidth={5}
                   />
                   <TouchableOpacity
+                    ref={(el) => { habitRefs.current[habit.id] = el; }}
                     className="ml-3 p-2"
-                    onPress={(e) => {
-                      const { pageX, pageY } = e.nativeEvent;
-                      setHabitMenuAnchor({
-                        x: pageX - 120, // offset to show menu to the left
-                        y: pageY - 15,
-                        width: 130,
-                        height: 0,
+                    onPress={() => {
+                      habitRefs.current[habit.id]?.measureInWindow((x, y, width, height) => {
+                        setHabitMenuAnchor({
+                          x: x + width - 150, // 150 is minWidth of menu, aligning to right
+                          y: y + height + 8,
+                          width: 150,
+                          height: 0,
+                        });
+                        setActiveHabitId(habit.id);
                       });
-                      setActiveHabitId(habit.id);
                     }}
                   >
                     <Octicons
@@ -463,17 +488,17 @@ export default function Habits() {
       <Modal
         visible={activeMenu !== null}
         transparent
-        animationType="fade"
-        onRequestClose={() => setActiveMenu(null)}
+        animationType="none"
+        onRequestClose={closeMenu}
       >
         <View style={StyleSheet.absoluteFill}>
           <TouchableOpacity
             style={StyleSheet.absoluteFill}
             activeOpacity={1}
-            onPress={() => setActiveMenu(null)}
+            onPress={closeMenu}
           />
           {menuAnchor && (
-            <View
+            <Animated.View
               className="bg-github-lightCanvas dark:bg-github-darkCanvas border border-github-lightBorder dark:border-github-darkBorder rounded-md overflow-hidden"
               style={{
                 position: "absolute",
@@ -481,6 +506,12 @@ export default function Habits() {
                 left: menuAnchor.x,
                 minWidth: menuAnchor.width,
                 zIndex: 10,
+                transformOrigin: "top",
+                transform: [{ scaleY: menuScaleY }],
+                opacity: menuScaleY.interpolate({
+                  inputRange: [0, 0.1, 1],
+                  outputRange: [0, 1, 1],
+                }),
               }}
             >
               {activeMenuOptions.map((option) => (
@@ -505,7 +536,7 @@ export default function Habits() {
                         option.value === "all" ? null : Number(option.value),
                       );
                     }
-                    setActiveMenu(null);
+                    closeMenu();
                   }}
                 >
                   <Text className="text-sm text-github-lightText dark:text-github-darkText">
@@ -516,7 +547,7 @@ export default function Habits() {
                   )}
                 </TouchableOpacity>
               ))}
-            </View>
+            </Animated.View>
           )}
         </View>
       </Modal>
