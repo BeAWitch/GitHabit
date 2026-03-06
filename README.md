@@ -12,6 +12,7 @@ GitHabit 是一款为开发者、极客和效率爱好者设计的开源、纯�
 <img src="https://github.com/user-attachments/assets/dfe62937-cc57-4ca4-ae83-61cb504c980d" alt="Screenshot of GitHabit app" width="200">
 <img src="https://github.com/user-attachments/assets/953e0679-7206-4958-af2d-9688888ea01d" alt="Screenshot of GitHabit app" width="200">
 <img src="https://github.com/user-attachments/assets/61ddfed5-46c2-4515-9acf-0e89e5fd0aef" alt="Screenshot of GitHabit app" width="200">
+
 ---
 
 ## <a id="english"></a>English
